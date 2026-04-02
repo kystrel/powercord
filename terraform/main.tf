@@ -4,7 +4,7 @@ provider "aws" {
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "6.6.0"
+  version = "6.6.1"
 
   name = "powercord-bot-vpc"
   cidr = "10.1.0.0/16"
