@@ -5,8 +5,9 @@
   "main": "src/index.ts",
   "scripts": {
     "build": "tsc",
+    "deploy:commands": "ts-node src/deploy-commands.ts",
     "dev": "nodemon",
-    "start": "ts-node src/index.ts",
+    "start": "ts-node --transpile-only src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

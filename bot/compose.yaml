@@ -8,7 +8,6 @@ services:
             - DISCORD_TOKEN=${DISCORD_TOKEN}
             - API_BASE_URL=${API_BASE_URL}
             - ENABLE_MOCK_API=${ENABLE_MOCK_API}
-            - LOGTAIL_SOURCE_TOKEN=${ENABLE_MOCK_API}
-            - LOGTAIL_INGESTING_HOST=${ENABLE_MOCK_API}
+            - BETTERSTACK_HEARTBEAT_URL=${BETTERSTACK_HEARTBEAT_URL}
         ports:
             - 3000:3000

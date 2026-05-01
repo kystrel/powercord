@@ -1,25 +1,34 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { Client, Collection, GatewayIntentBits } from 'discord.js';
+import { deployCommands } from './deploy-commands';
 import { Command } from './types/command';
-import './deploy-commands';
 import { config } from './utils/config';
 import logger from './utils/logger';
 import './utils/health';
 import { startHeartbeat } from './utils/heartbeat';
 
-const token = config.DISCORD_TOKEN;
-
 logger.info('Bot is starting...');
 if (config.ENABLE_MOCK_API || !config.API_BASE_URL) {
-    logger.info(
-        'Using mock data. Ensure that ENABLE_MOCK_API and API_BASE_URL are set for API use.',
+    logger.warn(
+        'API_BASE_URL is not configured or mock API is enabled; using mock data for OPL commands.',
     );
 } else {
     logger.info('Retrieving API data from: ' + config.API_BASE_URL);
 }
 
 async function initializeBot() {
+    startHeartbeat();
+
+    await deployCommands();
+
+    if (!config.DISCORD_TOKEN) {
+        logger.warn(
+            'DISCORD_TOKEN is not configured; skipping Discord gateway startup.',
+        );
+        return;
+    }
+
     const client = new Client({
         intents: [GatewayIntentBits.Guilds],
     });
@@ -29,11 +38,12 @@ async function initializeBot() {
     // Load commands
     const foldersPath = path.join(__dirname, 'commands');
     const commandFolders = fs.readdirSync(foldersPath);
+    const runtimeExtension = path.extname(__filename);
     for (const folder of commandFolders) {
         const commandsPath = path.join(foldersPath, folder);
         const commandFiles = fs
             .readdirSync(commandsPath)
-            .filter((file: string) => file.endsWith('.ts'));
+            .filter((file: string) => file.endsWith(runtimeExtension));
         for (const file of commandFiles) {
             const filePath = path.join(commandsPath, file);
             const command = require(filePath);
@@ -51,7 +61,7 @@ async function initializeBot() {
     const eventsPath = path.join(__dirname, 'events');
     const eventFiles = fs
         .readdirSync(eventsPath)
-        .filter((file: string) => file.endsWith('.ts'));
+        .filter((file: string) => file.endsWith(runtimeExtension));
     for (const file of eventFiles) {
         const filePath = path.join(eventsPath, file);
         const event = require(filePath).default;
@@ -62,8 +72,9 @@ async function initializeBot() {
         }
     }
 
-    client.login(token);
-    startHeartbeat();
+    await client.login(config.DISCORD_TOKEN);
 }
 
-initializeBot();
+void initializeBot().catch((error) => {
+    logger.error('Error during bot startup:', error);
+});
