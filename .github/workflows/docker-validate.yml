@@ -4,7 +4,14 @@ on:
     workflow_dispatch:
     pull_request:
         branches: [master]
-        paths: ['bot/**', 'pnpm-lock.yaml']
+        paths:
+            - 'bot/**'
+            - '.dockerignore'
+            - 'package.json'
+            - 'pnpm-workspace.yaml'
+            - 'pnpm-lock.yaml'
+            - '.github/workflows/docker-push.yml'
+            - '.github/workflows/docker-validate.yml'
 
 concurrency:
     group: docker-validate-${{ github.ref }}
@@ -29,7 +36,7 @@ jobs:
 
             - name: Run Docker container
               run: |
-                  docker run -d --name bot-validate -p 3000:3000 -e DISCORD_TOKEN=placeholder powercord-bot-validate
+                  docker run -d --name bot-validate -p 3000:3000 powercord-bot-validate
                   echo "Waiting for health endpoint..."
                   for i in {1..30}; do
                     if curl -sf http://localhost:3000/health > /dev/null; then

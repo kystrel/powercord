@@ -4,7 +4,13 @@ on:
     workflow_dispatch:
     push:
         branches: [master]
-        paths: ['bot/**', 'pnpm-lock.yaml']
+        paths:
+            - 'bot/**'
+            - '.dockerignore'
+            - 'package.json'
+            - 'pnpm-workspace.yaml'
+            - 'pnpm-lock.yaml'
+            - '.github/workflows/docker-push.yml'
 
 jobs:
     docker-push:
