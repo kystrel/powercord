@@ -13,6 +13,9 @@ on:
             - '.github/workflows/docker-push.yml'
             - '.github/workflows/docker-validate.yml'
 
+permissions:
+    contents: read
+
 concurrency:
     group: docker-validate-${{ github.ref }}
     cancel-in-progress: true
