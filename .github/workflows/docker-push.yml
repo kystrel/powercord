@@ -12,6 +12,9 @@ on:
             - 'pnpm-lock.yaml'
             - '.github/workflows/docker-push.yml'
 
+permissions:
+    contents: read
+
 jobs:
     docker-push:
         runs-on: ubuntu-latest
