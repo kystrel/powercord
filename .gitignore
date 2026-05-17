@@ -40,6 +40,13 @@ coverage
 .fleet
 .idea
 
+# Agent files
+AGENTS.md
+CLAUDE.md
+copilot-instructions*
+.claude
+.agents
+
 # Environment variables
 *.env*
 !.env.example
