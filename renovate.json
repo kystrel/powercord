@@ -1,4 +1,43 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "extends": ["config:recommended"]
+    "extends": ["config:recommended"],
+    "baseBranchPatterns": ["master"],
+    "dependencyDashboard": true,
+    "configMigration": true,
+    "schedule": ["before 6am on Monday"],
+    "timezone": "America/Chicago",
+    "prHourlyLimit": 0,
+    "prConcurrentLimit": 3,
+    "platformAutomerge": false,
+    "rangeStrategy": "pin",
+    "lockFileMaintenance": {
+        "enabled": true,
+        "automerge": false,
+        "schedule": ["before 6am on Monday"]
+    },
+    "packageRules": [
+        {
+            "matchUpdateTypes": ["patch"],
+            "groupName": "patch updates",
+            "minimumReleaseAge": "5 days",
+            "internalChecksFilter": "strict",
+            "prCreation": "not-pending",
+            "automerge": true
+        },
+        {
+            "matchUpdateTypes": ["minor"],
+            "groupName": "minor updates",
+            "dependencyDashboardApproval": true
+        },
+        {
+            "matchUpdateTypes": ["major"],
+            "dependencyDashboardApproval": true
+        },
+        {
+            "matchManagers": ["github-actions"],
+            "groupName": "github actions",
+            "minimumReleaseAge": "5 days",
+            "automerge": true
+        }
+    ]
 }
