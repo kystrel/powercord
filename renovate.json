@@ -17,6 +17,11 @@
     },
     "packageRules": [
         {
+            "matchManagers": ["npm"],
+            "matchDepTypes": ["engines"],
+            "rangeStrategy": "replace"
+        },
+        {
             "matchUpdateTypes": ["patch"],
             "groupName": "patch updates",
             "minimumReleaseAge": "5 days",
