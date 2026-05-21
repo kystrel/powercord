@@ -2,10 +2,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { FlatCompat } from '@eslint/eslintrc';
 import js from '@eslint/js';
-import typescriptEslint from '@typescript-eslint/eslint-plugin';
-import tsParser from '@typescript-eslint/parser';
 import { globalIgnores } from 'eslint/config';
 import globals from 'globals';
+import tseslint from 'typescript-eslint';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -28,7 +27,7 @@ export default [
 
     {
         plugins: {
-            '@typescript-eslint': typescriptEslint,
+            '@typescript-eslint': tseslint.plugin,
         },
 
         languageOptions: {
@@ -37,7 +36,7 @@ export default [
                 ...globals.node,
             },
 
-            parser: tsParser,
+            parser: tseslint.parser,
             ecmaVersion: 2021,
             sourceType: 'commonjs',
         },

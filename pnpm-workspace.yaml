@@ -1,3 +1,15 @@
 packages:
     - 'bot'
     - 'web'
+
+overrides:
+    devalue: '>=5.8.1'
+    nitropack: '>=2.13.4'
+    postcss: '>=8.5.10'
+
+allowBuilds:
+    '@parcel/watcher': true
+    esbuild: true
+    sharp: true
+    unrs-resolver: true
+    vue-demi: true
