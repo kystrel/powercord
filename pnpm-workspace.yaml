@@ -3,9 +3,9 @@ packages:
     - 'web'
 
 overrides:
-    devalue: '>=5.8.1'
-    nitropack: '>=2.13.4'
-    postcss: '>=8.5.10'
+    devalue: '5.8.1'
+    nitropack: '2.13.4'
+    postcss: '8.5.15'
 
 allowBuilds:
     '@parcel/watcher': true
