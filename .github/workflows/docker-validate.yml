@@ -1,4 +1,4 @@
-name: 'Docker Validate'
+name: Docker Validate
 
 on:
     workflow_dispatch:
@@ -12,10 +12,10 @@ on:
             - 'pnpm-lock.yaml'
             - '.github/workflows/docker-push.yml'
             - '.github/workflows/docker-validate.yml'
+            - '.github/actions/**'
 
 permissions:
     contents: read
-    security-events: write
 
 concurrency:
     group: docker-validate-${{ github.ref }}
@@ -24,6 +24,9 @@ concurrency:
 jobs:
     docker-validate:
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            security-events: write
         steps:
             - name: Harden runner
               uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
@@ -31,7 +34,7 @@ jobs:
                   # TODO: switch to block once egress endpoints are catalogued
                   egress-policy: audit
 
-            - name: Checkout code
+            - name: Check out code
               uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
             - name: Lint Dockerfile

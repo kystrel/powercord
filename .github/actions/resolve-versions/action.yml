@@ -14,6 +14,7 @@ runs:
           shell: bash
           run: |
               pnpm_version="$(jq -r '.packageManager | split("@")[1]' package.json)"
+              pnpm_version="${pnpm_version%%+*}"
               if [[ -z "${pnpm_version}" || "${pnpm_version}" == "null" ]]; then
                   echo "Unable to resolve pnpm version from package.json" >&2
                   exit 1
