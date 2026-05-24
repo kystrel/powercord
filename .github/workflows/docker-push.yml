@@ -32,6 +32,7 @@ jobs:
             - name: Harden runner
               uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
               with:
+                  # TODO: switch to block once egress endpoints are catalogued
                   egress-policy: audit
 
             - name: Checkout
@@ -42,16 +43,9 @@ jobs:
 
             - name: Resolve build versions
               id: versions
-              shell: bash
-              run: |
-                  pnpm_version="$(jq -r '.packageManager | split("@")[1]' package.json)"
-                  if [[ -z "${pnpm_version}" || "${pnpm_version}" == "null" ]]; then
-                      echo "Unable to resolve pnpm version from package.json" >&2
-                      exit 1
-                  fi
-                  echo "pnpm=${pnpm_version}" >> "${GITHUB_OUTPUT}"
+              uses: ./.github/actions/resolve-versions
 
-            - name: Build Docker image for scanning
+            - name: Build Docker image
               uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
               with:
                   context: .
@@ -93,20 +87,14 @@ jobs:
               id: login-ecr
               uses: aws-actions/amazon-ecr-login@fa648b43de3d4d023bcb3f89ed6940096949c419 # v2
 
-            - name: Build and push Docker image
-              uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
-              with:
-                  context: .
-                  file: bot/Dockerfile
-                  pull: true
-                  push: true
-                  tags: |
-                      ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
-                      ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
-                  build-args: |
-                      PNPM_VERSION=${{ steps.versions.outputs.pnpm }}
-                  cache-from: type=gha,scope=powercord-bot
-                  cache-to: type=gha,mode=max,scope=powercord-bot,ignore-error=true
+            - name: Push Docker image
+              env:
+                  ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+              run: |
+                  docker tag "powercord-bot:${{ github.sha }}" "${ECR_REGISTRY}/${ECR_REPOSITORY}:latest"
+                  docker tag "powercord-bot:${{ github.sha }}" "${ECR_REGISTRY}/${ECR_REPOSITORY}:${{ github.sha }}"
+                  docker push "${ECR_REGISTRY}/${ECR_REPOSITORY}:latest"
+                  docker push "${ECR_REGISTRY}/${ECR_REPOSITORY}:${{ github.sha }}"
 
             - name: Update ECS service
               run: |

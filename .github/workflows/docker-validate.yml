@@ -28,6 +28,7 @@ jobs:
             - name: Harden runner
               uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
               with:
+                  # TODO: switch to block once egress endpoints are catalogued
                   egress-policy: audit
 
             - name: Checkout code
@@ -43,14 +44,7 @@ jobs:
 
             - name: Resolve build versions
               id: versions
-              shell: bash
-              run: |
-                  pnpm_version="$(jq -r '.packageManager | split("@")[1]' package.json)"
-                  if [[ -z "${pnpm_version}" || "${pnpm_version}" == "null" ]]; then
-                      echo "Unable to resolve pnpm version from package.json" >&2
-                      exit 1
-                  fi
-                  echo "pnpm=${pnpm_version}" >> "${GITHUB_OUTPUT}"
+              uses: ./.github/actions/resolve-versions
 
             - name: Build Docker image
               uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0

@@ -19,7 +19,9 @@
     "typecheck:bot": "pnpm --filter powercord-bot run typecheck",
     "typecheck:web": "pnpm --filter powercord-web run typecheck",
     "test:bot": "pnpm --filter powercord-bot test",
+    "test:bot:coverage": "pnpm --filter powercord-bot run test:coverage",
     "test:web": "pnpm --filter powercord-web test",
+    "test:web:coverage": "pnpm --filter powercord-web run test:coverage",
     "clean": "rm -rf node_modules pnpm-lock.yaml bot/node_modules web/node_modules web/.nuxt web/.output web/dist"
   },
   "devDependencies": {

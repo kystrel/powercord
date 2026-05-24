@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
 
 ARG CHAINGUARD_REGISTRY=cgr.dev/chainguard
+# TODO: pin to a specific version once Chainguard free-tier access is approved
 ARG NODE_VERSION=latest
 ARG PNPM_VERSION=11.1.2
 

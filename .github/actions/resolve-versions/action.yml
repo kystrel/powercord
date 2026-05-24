@@ -1,0 +1,21 @@
+name: Resolve build versions
+description: Extract tool versions from package.json for Docker builds.
+
+outputs:
+    pnpm:
+        description: pnpm version from the packageManager field.
+        value: ${{ steps.extract.outputs.pnpm }}
+
+runs:
+    using: composite
+    steps:
+        - name: Extract versions
+          id: extract
+          shell: bash
+          run: |
+              pnpm_version="$(jq -r '.packageManager | split("@")[1]' package.json)"
+              if [[ -z "${pnpm_version}" || "${pnpm_version}" == "null" ]]; then
+                  echo "Unable to resolve pnpm version from package.json" >&2
+                  exit 1
+              fi
+              echo "pnpm=${pnpm_version}" >> "${GITHUB_OUTPUT}"

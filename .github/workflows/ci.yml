@@ -52,6 +52,7 @@ jobs:
             - name: Harden runner
               uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
               with:
+                  # TODO: switch to block once egress endpoints are catalogued
                   egress-policy: audit
 
             - name: Check out code
@@ -79,6 +80,7 @@ jobs:
             - name: Harden runner
               uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
               with:
+                  # TODO: switch to block once egress endpoints are catalogued
                   egress-policy: audit
 
             - name: Check out code
@@ -87,6 +89,9 @@ jobs:
             - name: Set up workspace
               uses: ./.github/actions/setup-pnpm
 
+            - name: Audit dependencies
+              run: pnpm audit --audit-level=high
+
             - name: Run ESLint
               run: pnpm run lint
 
@@ -94,13 +99,14 @@ jobs:
               run: pnpm run prettier
 
     bot-test:
-        needs: check-changes
+        needs: [check-changes, lint-format]
         if: needs.check-changes.outputs.bot == 'true'
         runs-on: ubuntu-latest
         steps:
             - name: Harden runner
               uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
               with:
+                  # TODO: switch to block once egress endpoints are catalogued
                   egress-policy: audit
 
             - name: Check out code
@@ -115,8 +121,7 @@ jobs:
               run: pnpm run typecheck:bot
 
             - name: Run bot tests with coverage
-              run: pnpm vitest run --coverage
-              working-directory: bot
+              run: pnpm run test:bot:coverage
 
             - name: Upload bot coverage
               uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6
@@ -126,13 +131,14 @@ jobs:
                   flags: bot
 
     web-test:
-        needs: check-changes
+        needs: [check-changes, lint-format]
         if: needs.check-changes.outputs.web == 'true'
         runs-on: ubuntu-latest
         steps:
             - name: Harden runner
               uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
               with:
+                  # TODO: switch to block once egress endpoints are catalogued
                   egress-policy: audit
 
             - name: Check out code
@@ -147,8 +153,7 @@ jobs:
               run: pnpm run typecheck:web
 
             - name: Run web tests with coverage
-              run: pnpm vitest run --coverage
-              working-directory: web
+              run: pnpm run test:web:coverage
 
             - name: Upload web coverage
               uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6
