@@ -57,6 +57,8 @@ jobs:
 
             - name: Check out code
               uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+              with:
+                  persist-credentials: false
 
             - name: Detect file changes
               uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
@@ -85,6 +87,8 @@ jobs:
 
             - name: Check out code
               uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+              with:
+                  persist-credentials: false
 
             - name: Set up workspace
               uses: ./.github/actions/setup-pnpm
@@ -111,6 +115,8 @@ jobs:
 
             - name: Check out code
               uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+              with:
+                  persist-credentials: false
 
             - name: Set up bot workspace
               uses: ./.github/actions/setup-pnpm
@@ -143,6 +149,8 @@ jobs:
 
             - name: Check out code
               uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+              with:
+                  persist-credentials: false
 
             - name: Set up web workspace
               uses: ./.github/actions/setup-pnpm
