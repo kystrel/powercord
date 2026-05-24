@@ -8,7 +8,9 @@
     "deploy:commands": "ts-node src/deploy-commands.ts",
     "dev": "nodemon",
     "start": "ts-node --transpile-only src/index.ts",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest"
   },
   "dependencies": {

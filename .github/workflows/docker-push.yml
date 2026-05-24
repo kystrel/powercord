@@ -1,4 +1,4 @@
-name: 'Docker Push'
+name: Docker Push
 
 on:
     workflow_dispatch:
@@ -11,19 +11,74 @@ on:
             - 'pnpm-workspace.yaml'
             - 'pnpm-lock.yaml'
             - '.github/workflows/docker-push.yml'
+            - '.github/actions/**'
 
 permissions:
     contents: read
 
+concurrency:
+    group: docker-push-${{ github.ref }}
+    cancel-in-progress: true
+
 jobs:
     docker-push:
         runs-on: ubuntu-latest
+        env:
+            ECR_REPOSITORY: powercord-bot
         permissions:
             id-token: write
             contents: read
+            security-events: write
         steps:
-            - name: Checkout
+            - name: Harden runner
+              uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+              with:
+                  # TODO: switch to block once egress endpoints are catalogued
+                  egress-policy: audit
+
+            - name: Check out code
               uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+              with:
+                  persist-credentials: false
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
+
+            - name: Resolve build versions
+              id: versions
+              uses: ./.github/actions/resolve-versions
+
+            - name: Build Docker image
+              uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+              with:
+                  context: .
+                  file: bot/Dockerfile
+                  pull: true
+                  load: true
+                  tags: powercord-bot:${{ github.sha }}
+                  build-args: |
+                      PNPM_VERSION=${{ steps.versions.outputs.pnpm }}
+                  cache-from: type=gha,scope=powercord-bot
+                  cache-to: type=gha,mode=max,scope=powercord-bot,ignore-error=true
+
+            - name: Run Trivy image scan
+              uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+              with:
+                  image-ref: powercord-bot:${{ github.sha }}
+                  vuln-type: os,library
+                  severity: HIGH,CRITICAL
+                  ignore-unfixed: true
+                  format: sarif
+                  output: trivy-image.sarif
+                  exit-code: '1'
+                  version: v0.70.0
+
+            - name: Upload Trivy image SARIF
+              if: ${{ always() && hashFiles('trivy-image.sarif') != '' }}
+              uses: github/codeql-action/upload-sarif@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4.36.0
+              with:
+                  sarif_file: trivy-image.sarif
+                  category: trivy-image
 
             - name: Configure AWS Credentials
               uses: aws-actions/configure-aws-credentials@d979d5b3a71173a29b74b5b88418bfda9437d885 # v6
@@ -35,15 +90,14 @@ jobs:
               id: login-ecr
               uses: aws-actions/amazon-ecr-login@fa648b43de3d4d023bcb3f89ed6940096949c419 # v2
 
-            - name: Build, tag, and push Docker image
+            - name: Push Docker image
               env:
                   ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-                  ECR_REPOSITORY: 'powercord-bot'
               run: |
-                  PNPM_VERSION=$(jq -r '.packageManager | ltrimstr("pnpm@")' package.json)
-                  docker build --build-arg PNPM_VERSION="$PNPM_VERSION" -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }} -f bot/Dockerfile .
-                  docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-                  docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
+                  docker tag "powercord-bot:${{ github.sha }}" "${ECR_REGISTRY}/${ECR_REPOSITORY}:latest"
+                  docker tag "powercord-bot:${{ github.sha }}" "${ECR_REGISTRY}/${ECR_REPOSITORY}:${{ github.sha }}"
+                  docker push "${ECR_REGISTRY}/${ECR_REPOSITORY}:latest"
+                  docker push "${ECR_REGISTRY}/${ECR_REPOSITORY}:${{ github.sha }}"
 
             - name: Update ECS service
               run: |

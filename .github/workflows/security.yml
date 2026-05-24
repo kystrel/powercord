@@ -1,0 +1,107 @@
+name: Security
+
+on:
+    workflow_dispatch:
+    schedule:
+        - cron: '0 6 * * 1'
+    push:
+        branches: [master]
+        paths:
+            - '.dockerignore'
+            - '.github/actions/**'
+            - '.github/workflows/**'
+            - 'bot/Dockerfile'
+            - 'bot/package.json'
+            - 'package.json'
+            - 'pnpm-lock.yaml'
+            - 'pnpm-workspace.yaml'
+            - 'web/package.json'
+    pull_request:
+        branches: [master]
+        paths:
+            - '.dockerignore'
+            - '.github/actions/**'
+            - '.github/workflows/**'
+            - 'bot/Dockerfile'
+            - 'bot/package.json'
+            - 'package.json'
+            - 'pnpm-lock.yaml'
+            - 'pnpm-workspace.yaml'
+            - 'web/package.json'
+
+permissions:
+    contents: read
+
+concurrency:
+    group: security-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    workflow-lint:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            security-events: write
+        steps:
+            - name: Harden runner
+              uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+              with:
+                  # TODO: switch to block once egress endpoints are catalogued
+                  egress-policy: audit
+
+            - name: Check out code
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+              with:
+                  persist-credentials: false
+
+            - name: Run actionlint
+              uses: devops-actions/actionlint@9fb9c192862f19e684586ca84b500461bcd8a541 # v0.1.12
+
+            - name: Run zizmor
+              uses: zizmorcore/zizmor-action@5f14fd08f7cf1cb1609c1e344975f152c7ee938d # v0.5.6
+              with:
+                  inputs: .github/workflows .github/actions
+                  version: v1.25.2
+                  persona: auditor
+                  min-severity: medium
+                  min-confidence: medium
+                  advanced-security: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+                  annotations: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+
+    dependency-scan:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            security-events: write
+        steps:
+            - name: Harden runner
+              uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+              with:
+                  # TODO: switch to block once egress endpoints are catalogued
+                  egress-policy: audit
+
+            - name: Check out code
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+              with:
+                  persist-credentials: false
+
+            - name: Run Trivy filesystem scan
+              uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+              with:
+                  scan-type: fs
+                  scan-ref: .
+                  scanners: vuln
+                  vuln-type: library
+                  severity: HIGH,CRITICAL
+                  ignore-unfixed: true
+                  format: sarif
+                  output: trivy-fs.sarif
+                  exit-code: '1'
+                  version: v0.70.0
+
+            - name: Upload Trivy filesystem SARIF
+              if: ${{ always() && hashFiles('trivy-fs.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+              uses: github/codeql-action/upload-sarif@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4.36.0
+              with:
+                  sarif_file: trivy-fs.sarif
+                  category: trivy-filesystem
