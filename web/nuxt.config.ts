@@ -7,6 +7,7 @@ export default defineNuxtConfig({
         compatibilityVersion: 4,
     },
     devtools: { enabled: !isTest },
+    colorMode: false,
     hooks: {
         ready(nuxt) {
             if (isTest) {

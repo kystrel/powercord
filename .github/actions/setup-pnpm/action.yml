@@ -1,0 +1,41 @@
+name: Setup pnpm workspace
+description: Install pnpm, Node.js, and workspace dependencies with pnpm store caching.
+
+inputs:
+    node-version:
+        description: Node.js version to install.
+        required: false
+        default: '24.15.0'
+    filter:
+        description: Optional pnpm workspace filter to install.
+        required: false
+        default: ''
+    install:
+        description: Whether to install dependencies after setup.
+        required: false
+        default: 'true'
+
+runs:
+    using: composite
+    steps:
+        - name: Set up pnpm
+          uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6
+
+        - name: Set up Node.js
+          uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+          with:
+              node-version: ${{ inputs.node-version }}
+              cache: pnpm
+              cache-dependency-path: pnpm-lock.yaml
+
+        - name: Install dependencies
+          if: ${{ inputs.install == 'true' }}
+          shell: bash
+          env:
+              PNPM_FILTER: ${{ inputs.filter }}
+          run: |
+              if [[ -n "${PNPM_FILTER}" ]]; then
+                  pnpm install --frozen-lockfile --filter "${PNPM_FILTER}"
+              else
+                  pnpm install --frozen-lockfile
+              fi

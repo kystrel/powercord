@@ -15,6 +15,9 @@
     "lint:fix": "pnpm run lint -- --fix",
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
+    "typecheck": "pnpm --recursive run typecheck",
+    "typecheck:bot": "pnpm --filter powercord-bot run typecheck",
+    "typecheck:web": "pnpm --filter powercord-web run typecheck",
     "test:bot": "pnpm --filter powercord-bot test",
     "test:web": "pnpm --filter powercord-web test",
     "clean": "rm -rf node_modules pnpm-lock.yaml bot/node_modules web/node_modules web/.nuxt web/.output web/dist"

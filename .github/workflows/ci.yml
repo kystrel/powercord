@@ -1,13 +1,46 @@
 name: ci
 
 on:
+    workflow_dispatch:
     push:
         branches: [master]
+        paths:
+            - '.github/actions/setup-pnpm/**'
+            - '.github/workflows/ci.yml'
+            - '.npmrc'
+            - '.nvmrc'
+            - '.prettierignore'
+            - '.prettierrc'
+            - 'bot/**'
+            - 'codecov.yml'
+            - 'eslint.config.mjs'
+            - 'package.json'
+            - 'pnpm-lock.yaml'
+            - 'pnpm-workspace.yaml'
+            - 'web/**'
     pull_request:
         branches: [master]
+        paths:
+            - '.github/actions/setup-pnpm/**'
+            - '.github/workflows/ci.yml'
+            - '.npmrc'
+            - '.nvmrc'
+            - '.prettierignore'
+            - '.prettierrc'
+            - 'bot/**'
+            - 'codecov.yml'
+            - 'eslint.config.mjs'
+            - 'package.json'
+            - 'pnpm-lock.yaml'
+            - 'pnpm-workspace.yaml'
+            - 'web/**'
 
 permissions:
     contents: read
+
+concurrency:
+    group: ci-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: true
 
 jobs:
     check-changes:
@@ -16,6 +49,11 @@ jobs:
             bot: ${{ steps.filter.outputs.bot }}
             web: ${{ steps.filter.outputs.web }}
         steps:
+            - name: Harden runner
+              uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+              with:
+                  egress-policy: audit
+
             - name: Check out code
               uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
@@ -28,31 +66,26 @@ jobs:
                           - 'bot/**'
                           - 'package.json'
                           - 'pnpm-lock.yaml'
+                          - 'pnpm-workspace.yaml'
                       web:
                           - 'web/**'
                           - 'package.json'
                           - 'pnpm-lock.yaml'
+                          - 'pnpm-workspace.yaml'
 
     lint-format:
         runs-on: ubuntu-latest
         steps:
+            - name: Harden runner
+              uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+              with:
+                  egress-policy: audit
+
             - name: Check out code
               uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-            - name: Set up pnpm
-              uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6
-
-            - name: Set up Node.js
-              uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-              with:
-                  node-version: '24.15.0'
-                  cache: 'pnpm'
-
-            - name: Install dependencies
-              run: pnpm install --frozen-lockfile
-
-            - name: Audit dependencies
-              run: pnpm audit --audit-level=high
+            - name: Set up workspace
+              uses: ./.github/actions/setup-pnpm
 
             - name: Run ESLint
               run: pnpm run lint
@@ -65,20 +98,21 @@ jobs:
         if: needs.check-changes.outputs.bot == 'true'
         runs-on: ubuntu-latest
         steps:
+            - name: Harden runner
+              uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+              with:
+                  egress-policy: audit
+
             - name: Check out code
               uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-            - name: Set up pnpm
-              uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6
-
-            - name: Set up Node.js
-              uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+            - name: Set up bot workspace
+              uses: ./.github/actions/setup-pnpm
               with:
-                  node-version: '24.15.0'
-                  cache: 'pnpm'
+                  filter: powercord-bot
 
-            - name: Install bot dependencies
-              run: pnpm install --frozen-lockfile --filter powercord-bot
+            - name: Type-check bot
+              run: pnpm run typecheck:bot
 
             - name: Run bot tests with coverage
               run: pnpm vitest run --coverage
@@ -96,20 +130,21 @@ jobs:
         if: needs.check-changes.outputs.web == 'true'
         runs-on: ubuntu-latest
         steps:
+            - name: Harden runner
+              uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+              with:
+                  egress-policy: audit
+
             - name: Check out code
               uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-            - name: Set up pnpm
-              uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6
-
-            - name: Set up Node.js
-              uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+            - name: Set up web workspace
+              uses: ./.github/actions/setup-pnpm
               with:
-                  node-version: '24.15.0'
-                  cache: 'pnpm'
+                  filter: powercord-web
 
-            - name: Install web dependencies
-              run: pnpm install --frozen-lockfile --filter powercord-web
+            - name: Type-check web
+              run: pnpm run typecheck:web
 
             - name: Run web tests with coverage
               run: pnpm vitest run --coverage

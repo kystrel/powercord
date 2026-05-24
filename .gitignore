@@ -13,6 +13,7 @@ bot/package-lock.json
 web/package-lock.json
 
 node_modules
+.pnpm-store
 dist
 dist-ssr
 *.local
