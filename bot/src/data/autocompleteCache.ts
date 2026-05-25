@@ -134,7 +134,9 @@ export class AutocompleteCache {
         if (!this.options.bucket) return;
         if (this.refreshPromise) return this.refreshPromise;
 
-        this.refreshPromise = this.loadSnapshot()
+        const bucket = this.options.bucket;
+
+        this.refreshPromise = this.loadSnapshot(bucket)
             .catch((error: unknown) => {
                 this.options.logger.error(
                     'Autocomplete cache refresh failed:',
@@ -202,11 +204,8 @@ export class AutocompleteCache {
         return fallback(query, safeLimit);
     }
 
-    private async loadSnapshot(): Promise<void> {
-        const bucket = this.options.bucket;
-        if (!bucket) return;
-
-        const manifest = await this.loadJson<unknown>(MANIFEST_KEY);
+    private async loadSnapshot(bucket: string): Promise<void> {
+        const manifest = await this.loadJson<unknown>(bucket, MANIFEST_KEY);
         if (!isManifest(manifest)) {
             throw new Error('Invalid autocomplete manifest payload');
         }
@@ -219,8 +218,8 @@ export class AutocompleteCache {
         }
 
         const [lifterNames, meetNames] = await Promise.all([
-            this.loadGzippedJson<unknown>(LIFTERS_KEY),
-            this.loadGzippedJson<unknown>(MEETS_KEY),
+            this.loadGzippedJson<unknown>(bucket, LIFTERS_KEY),
+            this.loadGzippedJson<unknown>(bucket, MEETS_KEY),
         ]);
 
         if (!isStringArray(lifterNames)) {
@@ -251,24 +250,19 @@ export class AutocompleteCache {
         });
     }
 
-    private async loadJson<T>(key: string): Promise<T> {
-        const body = await this.loadObjectBody(key);
+    private async loadJson<T>(bucket: string, key: string): Promise<T> {
+        const body = await this.loadObjectBody(bucket, key);
         const text = await body.transformToString('utf-8');
         return JSON.parse(text) as T;
     }
 
-    private async loadGzippedJson<T>(key: string): Promise<T> {
-        const body = await this.loadObjectBody(key);
+    private async loadGzippedJson<T>(bucket: string, key: string): Promise<T> {
+        const body = await this.loadObjectBody(bucket, key);
         const bytes = await body.transformToByteArray();
         return JSON.parse(gunzipSync(bytes).toString('utf-8')) as T;
     }
 
-    private async loadObjectBody(key: string) {
-        const bucket = this.options.bucket;
-        if (!bucket) {
-            throw new Error('STATIC_BUCKET is not configured');
-        }
-
+    private async loadObjectBody(bucket: string, key: string) {
         const response = await this.options.s3.send(
             new GetObjectCommand({ Bucket: bucket, Key: key }),
         );

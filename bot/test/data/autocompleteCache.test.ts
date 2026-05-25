@@ -3,8 +3,10 @@ import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
     AutocompleteCache,
+    autocompleteCache,
     normalizeAutocompleteLimit,
     searchAutocompleteNames,
+    startAutocompleteCache,
 } from '../../src/data/autocompleteCache';
 
 type TestObjectMap = Record<string, string | Buffer>;
@@ -87,6 +89,16 @@ describe('searchAutocompleteNames', () => {
 
     it('matches all names for an empty query (caller is responsible for guarding)', () => {
         expect(searchAutocompleteNames(['Alice'], '', 10)).toEqual(['Alice']);
+    });
+
+    it('stops at the limit during the first-pass prefix scan', () => {
+        const names = ['Alice', 'Alan', 'Bob'];
+        expect(searchAutocompleteNames(names, 'a', 1)).toEqual(['Alice']);
+    });
+
+    it('stops at the limit during the second-pass mid-word scan', () => {
+        const names = ['Bob', 'Charlie'];
+        expect(searchAutocompleteNames(names, 'ob', 1)).toEqual(['Bob']);
     });
 });
 
@@ -235,5 +247,175 @@ describe('AutocompleteCache', () => {
 
         expect(send).toHaveBeenCalled();
         cache.stop();
+    });
+
+    it('logs a warning when started without a bucket configured', async () => {
+        const logger = makeLogger();
+        const { s3 } = makeS3({});
+        const cache = new AutocompleteCache({
+            s3,
+            refreshIntervalSeconds: 300,
+            logger,
+        });
+
+        cache.start();
+        await cache.refresh();
+        cache.stop();
+
+        expect(logger.warn).toHaveBeenCalledWith(
+            'STATIC_BUCKET is not configured; autocomplete will use HTTP fallback.',
+        );
+    });
+
+    it('logs an error when the manifest payload is not an object', async () => {
+        const logger = makeLogger();
+        const { s3 } = makeS3({
+            'autocomplete/manifest.json': JSON.stringify(null),
+        });
+        const cache = new AutocompleteCache({
+            s3,
+            bucket: 'test-bucket',
+            refreshIntervalSeconds: 300,
+            logger,
+        });
+
+        await cache.refresh();
+
+        expect(logger.error).toHaveBeenCalledWith(
+            'Autocomplete cache refresh failed:',
+            expect.objectContaining({
+                message: 'Invalid autocomplete manifest payload',
+            }),
+        );
+    });
+
+    it('logs an error when the manifest payload is missing required fields', async () => {
+        const logger = makeLogger();
+        const { s3 } = makeS3({
+            'autocomplete/manifest.json': JSON.stringify({ foo: 'bar' }),
+        });
+        const cache = new AutocompleteCache({
+            s3,
+            bucket: 'test-bucket',
+            refreshIntervalSeconds: 300,
+            logger,
+        });
+
+        await cache.refresh();
+
+        expect(logger.error).toHaveBeenCalledWith(
+            'Autocomplete cache refresh failed:',
+            expect.objectContaining({
+                message: 'Invalid autocomplete manifest payload',
+            }),
+        );
+    });
+
+    it('logs an error when the meets payload is not a string array', async () => {
+        const logger = makeLogger();
+        const { s3 } = makeS3(makeObjects('rev1', ['Valid Lifter'], [1, 2, 3]));
+        const cache = new AutocompleteCache({
+            s3,
+            bucket: 'test-bucket',
+            refreshIntervalSeconds: 300,
+            logger,
+        });
+
+        await cache.refresh();
+
+        expect(logger.error).toHaveBeenCalledWith(
+            'Autocomplete cache refresh failed:',
+            expect.objectContaining({
+                message: 'Invalid meet autocomplete payload',
+            }),
+        );
+    });
+
+    it('logs an error when an S3 object has no body', async () => {
+        const logger = makeLogger();
+        const send = vi.fn().mockResolvedValue({ Body: undefined });
+        const s3 = { send } as unknown as S3Client;
+        const cache = new AutocompleteCache({
+            s3,
+            bucket: 'test-bucket',
+            refreshIntervalSeconds: 300,
+            logger,
+        });
+
+        await cache.refresh();
+
+        expect(logger.error).toHaveBeenCalledWith(
+            'Autocomplete cache refresh failed:',
+            expect.objectContaining({
+                message: expect.stringContaining('no body'),
+            }),
+        );
+    });
+
+    it('stop is a no-op when no timer is active', () => {
+        const cache = new AutocompleteCache({
+            s3: makeS3({}).s3,
+            bucket: 'test-bucket',
+            refreshIntervalSeconds: 300,
+            logger: makeLogger(),
+        });
+        expect(() => cache.stop()).not.toThrow();
+    });
+
+    it('deduplicates concurrent refresh calls', async () => {
+        const { s3, send } = makeS3(makeObjects('rev1', ['Alice'], []));
+        const cache = new AutocompleteCache({
+            s3,
+            bucket: 'test-bucket',
+            refreshIntervalSeconds: 300,
+            logger: makeLogger(),
+        });
+
+        const [, ] = await Promise.all([cache.refresh(), cache.refresh()]);
+
+        expect(send).toHaveBeenCalledTimes(3);
+    });
+
+    it('serves meet autocomplete from the local snapshot without calling fallback', async () => {
+        const logger = makeLogger();
+        const { s3 } = makeS3(makeObjects('rev1', [], ['2025 USAPL Raw Nationals']));
+        const cache = new AutocompleteCache({
+            s3,
+            bucket: 'test-bucket',
+            refreshIntervalSeconds: 300,
+            logger,
+        });
+        const fallback = vi.fn();
+
+        await cache.refresh();
+        const result = await cache.getMeetAutocomplete('usapl', 10, fallback);
+
+        expect(result).toEqual(['2025 USAPL Raw Nationals']);
+        expect(fallback).not.toHaveBeenCalled();
+    });
+
+    it('triggers a background refresh on cache miss when bucket is configured', async () => {
+        const logger = makeLogger();
+        const { s3, send } = makeS3(makeObjects('rev1', ['Alice'], []));
+        const cache = new AutocompleteCache({
+            s3,
+            bucket: 'test-bucket',
+            refreshIntervalSeconds: 300,
+            logger,
+        });
+        const fallback = vi.fn().mockResolvedValue(['Fallback']);
+
+        const result = await cache.getLifterAutocomplete('alice', 10, fallback);
+
+        expect(result).toEqual(['Fallback']);
+        expect(fallback).toHaveBeenCalled();
+        expect(send).toHaveBeenCalled();
+    });
+
+    it('startAutocompleteCache calls start on the singleton cache', () => {
+        const spy = vi.spyOn(autocompleteCache, 'start').mockImplementation(() => {});
+        startAutocompleteCache();
+        expect(spy).toHaveBeenCalled();
+        spy.mockRestore();
     });
 });
