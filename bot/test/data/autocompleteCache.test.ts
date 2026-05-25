@@ -85,8 +85,8 @@ describe('searchAutocompleteNames', () => {
         ]);
     });
 
-    it('returns an empty array for empty queries', () => {
-        expect(searchAutocompleteNames(['Alice'], '', 10)).toEqual([]);
+    it('matches all names for an empty query (caller is responsible for guarding)', () => {
+        expect(searchAutocompleteNames(['Alice'], '', 10)).toEqual(['Alice']);
     });
 });
 
@@ -129,6 +129,24 @@ describe('AutocompleteCache', () => {
                 meetCount: 1,
             }),
         );
+    });
+
+    it('returns an empty array for an empty query without calling fallback', async () => {
+        const logger = makeLogger();
+        const { s3 } = makeS3(makeObjects('rev1', ['A Kandasamy'], []));
+        const cache = new AutocompleteCache({
+            s3,
+            bucket: 'test-bucket',
+            refreshIntervalSeconds: 300,
+            logger,
+        });
+        const fallback = vi.fn();
+
+        await cache.refresh();
+        const result = await cache.getLifterAutocomplete('', 10, fallback);
+
+        expect(result).toEqual([]);
+        expect(fallback).not.toHaveBeenCalled();
     });
 
     it('serves local lifter autocomplete without calling fallback', async () => {

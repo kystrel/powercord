@@ -48,8 +48,6 @@ export function searchAutocompleteNames(
     query: string,
     limit = DEFAULT_LIMIT,
 ): string[] {
-    if (!query) return [];
-
     const maxResults = normalizeAutocompleteLimit(limit);
     const lowerQuery = query.toLowerCase();
     const results: string[] = [];
@@ -176,6 +174,7 @@ export class AutocompleteCache {
         limit: number,
         fallback: AutocompleteFallback,
     ): Promise<string[] | undefined> {
+        if (!query) return [];
         const safeLimit = normalizeAutocompleteLimit(limit);
         const startedAt = Date.now();
         const snapshot = this.snapshot;
