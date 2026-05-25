@@ -371,14 +371,16 @@ describe('AutocompleteCache', () => {
             logger: makeLogger(),
         });
 
-        const [, ] = await Promise.all([cache.refresh(), cache.refresh()]);
+        const [,] = await Promise.all([cache.refresh(), cache.refresh()]);
 
         expect(send).toHaveBeenCalledTimes(3);
     });
 
     it('serves meet autocomplete from the local snapshot without calling fallback', async () => {
         const logger = makeLogger();
-        const { s3 } = makeS3(makeObjects('rev1', [], ['2025 USAPL Raw Nationals']));
+        const { s3 } = makeS3(
+            makeObjects('rev1', [], ['2025 USAPL Raw Nationals']),
+        );
         const cache = new AutocompleteCache({
             s3,
             bucket: 'test-bucket',
@@ -413,7 +415,9 @@ describe('AutocompleteCache', () => {
     });
 
     it('startAutocompleteCache calls start on the singleton cache', () => {
-        const spy = vi.spyOn(autocompleteCache, 'start').mockImplementation(() => {});
+        const spy = vi
+            .spyOn(autocompleteCache, 'start')
+            .mockImplementation(() => {});
         startAutocompleteCache();
         expect(spy).toHaveBeenCalled();
         spy.mockRestore();
