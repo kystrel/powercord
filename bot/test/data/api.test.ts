@@ -20,10 +20,18 @@ const { mockConfig, mockApiClient, mockMockClient } = vi.hoisted(() => ({
         getMeetAutocomplete: vi.fn(),
     },
 }));
+const mockAutocompleteCache = vi.hoisted(() => ({
+    autocompleteCache: {
+        getLifterAutocomplete: vi.fn(),
+        getMeetAutocomplete: vi.fn(),
+    },
+    startAutocompleteCache: vi.fn(),
+}));
 
 vi.mock('../../src/utils/config', () => ({ config: mockConfig }));
 vi.mock('../../src/data/apiClient', () => mockApiClient);
 vi.mock('../../src/data/mockClient', () => mockMockClient);
+vi.mock('../../src/data/autocompleteCache', () => mockAutocompleteCache);
 
 describe('api', () => {
     beforeEach(() => {
@@ -111,17 +119,21 @@ describe('api', () => {
         expect(mockApiClient.getLifterAutocomplete).not.toHaveBeenCalled();
     });
 
-    it('routes getLifterAutocomplete to apiClient when ENABLE_MOCK_API is false', async () => {
+    it('routes getLifterAutocomplete through the local cache when ENABLE_MOCK_API is false', async () => {
         mockConfig.ENABLE_MOCK_API = false;
         mockConfig.API_BASE_URL = 'http://localhost:3000/api';
+        mockAutocompleteCache.autocompleteCache.getLifterAutocomplete.mockResolvedValue(
+            ['Jane Doe'],
+        );
 
         const { api } = await import('../../src/data/api');
-        await api.getLifterAutocomplete('Jane', 5);
+        const result = await api.getLifterAutocomplete('Jane', 5);
 
-        expect(mockApiClient.getLifterAutocomplete).toHaveBeenCalledWith(
-            'Jane',
-            5,
-        );
+        expect(result).toEqual(['Jane Doe']);
+        expect(
+            mockAutocompleteCache.autocompleteCache.getLifterAutocomplete,
+        ).toHaveBeenCalledWith('Jane', 5, mockApiClient.getLifterAutocomplete);
+        expect(mockApiClient.getLifterAutocomplete).not.toHaveBeenCalled();
         expect(mockMockClient.getLifterAutocomplete).not.toHaveBeenCalled();
     });
 
@@ -139,17 +151,43 @@ describe('api', () => {
         expect(mockApiClient.getMeetAutocomplete).not.toHaveBeenCalled();
     });
 
-    it('routes getMeetAutocomplete to apiClient when ENABLE_MOCK_API is false', async () => {
+    it('routes getMeetAutocomplete through the local cache when ENABLE_MOCK_API is false', async () => {
+        mockConfig.ENABLE_MOCK_API = false;
+        mockConfig.API_BASE_URL = 'http://localhost:3000/api';
+        mockAutocompleteCache.autocompleteCache.getMeetAutocomplete.mockResolvedValue(
+            ['2025 USAPL Raw Nationals'],
+        );
+
+        const { api } = await import('../../src/data/api');
+        const result = await api.getMeetAutocomplete('Labor', 5);
+
+        expect(result).toEqual(['2025 USAPL Raw Nationals']);
+        expect(
+            mockAutocompleteCache.autocompleteCache.getMeetAutocomplete,
+        ).toHaveBeenCalledWith('Labor', 5, mockApiClient.getMeetAutocomplete);
+        expect(mockApiClient.getMeetAutocomplete).not.toHaveBeenCalled();
+        expect(mockMockClient.getMeetAutocomplete).not.toHaveBeenCalled();
+    });
+
+    it('starts autocomplete cache refresh for the real API client', async () => {
         mockConfig.ENABLE_MOCK_API = false;
         mockConfig.API_BASE_URL = 'http://localhost:3000/api';
 
-        const { api } = await import('../../src/data/api');
-        await api.getMeetAutocomplete('Labor', 5);
+        const { startApiDataRefresh } = await import('../../src/data/api');
+        startApiDataRefresh();
 
-        expect(mockApiClient.getMeetAutocomplete).toHaveBeenCalledWith(
-            'Labor',
-            5,
-        );
-        expect(mockMockClient.getMeetAutocomplete).not.toHaveBeenCalled();
+        expect(mockAutocompleteCache.startAutocompleteCache).toHaveBeenCalled();
+    });
+
+    it('does not start autocomplete cache refresh for the mock API client', async () => {
+        mockConfig.ENABLE_MOCK_API = true;
+        mockConfig.API_BASE_URL = 'http://localhost:3000/api';
+
+        const { startApiDataRefresh } = await import('../../src/data/api');
+        startApiDataRefresh();
+
+        expect(
+            mockAutocompleteCache.startAutocompleteCache,
+        ).not.toHaveBeenCalled();
     });
 });
