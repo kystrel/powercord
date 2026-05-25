@@ -44,6 +44,11 @@ This project uses [dotenv](https://github.com/motdotla/dotenv#readme) to manage 
 > [!WARNING]
 > Keep the Discord token to yourself at all costs.
 
+When `STATIC_BUCKET` is configured, the bot loads PowerCord Data autocomplete
+blobs from S3 into memory and answers Discord autocomplete locally. If the cache
+is not ready or a refresh fails before any cache is loaded, the bot falls back to
+the public HTTP autocomplete API configured by `API_BASE_URL`.
+
 ### Project
 
 In the root directory of the project enter the following commands. This will install all dependencies and begin the dev instance.

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { Client, Collection, GatewayIntentBits } from 'discord.js';
+import { startApiDataRefresh } from './data/api';
 import { deployCommands } from './deploy-commands';
 import { Command } from './types/command';
 import { config } from './utils/config';
@@ -19,6 +20,7 @@ if (config.ENABLE_MOCK_API || !config.API_BASE_URL) {
 
 async function initializeBot() {
     startHeartbeat();
+    startApiDataRefresh();
 
     await deployCommands();
 
