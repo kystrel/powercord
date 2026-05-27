@@ -127,6 +127,7 @@ jobs:
                     if [ "$SSM_READY" = "$INSTANCE_ID" ]; then
                       break
                     fi
+                    echo "SSM not ready yet (${attempt}/60); retrying..."
                     sleep 10
                   done
                   if [ "$SSM_READY" != "$INSTANCE_ID" ]; then
@@ -165,6 +166,7 @@ jobs:
                         exit 1
                         ;;
                     esac
+                    echo "Bot restart command status: ${STATUS:-Pending} (${attempt}/60)"
                     sleep 5
                   done
 
