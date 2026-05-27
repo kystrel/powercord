@@ -44,6 +44,9 @@ jobs:
               with:
                   dockerfile: ./bot/Dockerfile
 
+            - name: Set up QEMU
+              uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
+
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
 
@@ -56,13 +59,14 @@ jobs:
               with:
                   context: .
                   file: bot/Dockerfile
+                  platforms: linux/arm64
                   pull: true
                   load: true
                   tags: powercord-bot-validate:${{ github.sha }}
                   build-args: |
                       PNPM_VERSION=${{ steps.versions.outputs.pnpm }}
-                  cache-from: type=gha,scope=powercord-bot
-                  cache-to: type=gha,mode=max,scope=powercord-bot,ignore-error=true
+                  cache-from: type=gha,scope=powercord-bot-arm64
+                  cache-to: type=gha,mode=max,scope=powercord-bot-arm64,ignore-error=true
 
             - name: Run Trivy image scan
               uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
