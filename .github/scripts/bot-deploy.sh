@@ -80,7 +80,7 @@ echo "Waiting for UserData (cloud-init) to complete on ${INSTANCE_ID}..."
 INIT_CMD_ID=$(aws ssm send-command \
   --instance-ids "$INSTANCE_ID" \
   --document-name "AWS-RunShellScript" \
-  --parameters '{"commands":["cloud-init status --wait; ci_rc=$?; test -f /opt/powercord-start.sh || { echo \"Start script missing (cloud-init exit ${ci_rc}) — redeploy PowercordBotStack to replace the instance\" >&2; exit 1; }"]}' \
+  --parameters '{"commands":["cloud-init status --wait; ci_rc=$?; if [ \"$ci_rc\" -ne 0 ] || ! test -f /opt/powercord-start.sh; then echo \"=== /var/log/cloud-init-output.log (last 100 lines) ===\"; tail -100 /var/log/cloud-init-output.log 2>/dev/null || true; fi; test -f /opt/powercord-start.sh || { echo \"Start script missing (cloud-init exit ${ci_rc}) — see log above\" >&2; exit 1; }"]}' \
   --region us-east-1 \
   --query "Command.CommandId" \
   --output text)
