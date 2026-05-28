@@ -41,15 +41,18 @@ fi
 # completion so the start script is guaranteed to exist before we invoke it.
 
 ssm_poll() {
-  local cmd_id="$1" label="$2"
-  for attempt in {1..60}; do
+  local cmd_id="$1" label="$2" max_attempts="${3:-60}"
+  for attempt in $(seq 1 "$max_attempts"); do
     local status
+    local err
     status=$(aws ssm get-command-invocation \
       --command-id "$cmd_id" \
       --instance-id "$INSTANCE_ID" \
       --region us-east-1 \
       --query "Status" \
-      --output text 2>/dev/null || true)
+      --output text 2>/tmp/ssm_poll_err || true)
+    err=$(cat /tmp/ssm_poll_err 2>/dev/null || true)
+    [ -n "$err" ] && echo "${label}: aws error: ${err}" >&2
     case "$status" in
       Success)
         echo "${label}: succeeded"
@@ -66,10 +69,10 @@ ssm_poll() {
         return 1
         ;;
     esac
-    echo "${label}: ${status:-Pending} (${attempt}/60)"
+    echo "${label}: ${status:-Pending} (${attempt}/${max_attempts})"
     sleep 5
   done
-  echo "${label}: timed out waiting for command ${cmd_id}" >&2
+  echo "${label}: timed out after ${max_attempts} attempts waiting for command ${cmd_id}" >&2
   return 1
 }
 
@@ -77,11 +80,11 @@ echo "Waiting for UserData (cloud-init) to complete on ${INSTANCE_ID}..."
 INIT_CMD_ID=$(aws ssm send-command \
   --instance-ids "$INSTANCE_ID" \
   --document-name "AWS-RunShellScript" \
-  --parameters '{"commands":["cloud-init status --wait"]}' \
+  --parameters '{"commands":["cloud-init status --wait; ci_rc=$?; test -f /opt/powercord-start.sh || { echo \"Start script missing (cloud-init exit ${ci_rc}) — redeploy PowercordBotStack to replace the instance\" >&2; exit 1; }"]}' \
   --region us-east-1 \
   --query "Command.CommandId" \
   --output text)
-ssm_poll "$INIT_CMD_ID" "cloud-init"
+ssm_poll "$INIT_CMD_ID" "cloud-init" 240
 
 # ── Deploy ────────────────────────────────────────────────────────────────────
 
