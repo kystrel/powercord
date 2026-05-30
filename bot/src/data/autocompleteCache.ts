@@ -276,7 +276,7 @@ export class AutocompleteCache {
 }
 
 export const autocompleteCache = new AutocompleteCache({
-    s3: new S3Client({}),
+    s3: new S3Client({ region: 'us-east-1' }),
     bucket: config.STATIC_BUCKET,
     refreshIntervalSeconds: config.AUTOCOMPLETE_REFRESH_INTERVAL_SECONDS,
     logger,
