@@ -17,7 +17,7 @@ async function fetchLifter(name: string): Promise<Lifter | undefined> {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('lifter')
-        .setDescription(`Displays lifter's last 10 meets`)
+        .setDescription(`Displays lifter's last 3 meets`)
         .addStringOption((option: SlashCommandStringOption) =>
             option
                 .setName('name')
@@ -68,7 +68,7 @@ module.exports = {
                 embed.setURL(lifter.url);
             }
 
-            const fields = lifter.meets.flatMap((meet, index) => [
+            const fields = lifter.meets.slice(0, 3).flatMap((meet, index) => [
                 {
                     name: `\`${index + 1}.\` ${meet.federation} ${meet.name}`,
                     value: `
