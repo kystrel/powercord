@@ -1,9 +1,9 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { REST, Routes } from 'discord.js';
+import { errorLogFields } from './logging/fields';
+import logger from './logging/logger';
 import { config } from './utils/config';
-import logger from './utils/logger';
-
-const fs = require('node:fs');
-const path = require('node:path');
 
 interface DeployCommandsOptions {
     clientId?: string;
@@ -29,7 +29,11 @@ function loadCommandPayloads(): unknown[] {
                 commands.push(command.data.toJSON());
             } else {
                 logger.warn(
-                    `The command at ${filePath} is missing a required "data" or "execute" property.`,
+                    {
+                        event: 'discord_commands.invalid_command_file',
+                        filePath,
+                    },
+                    'command file missing required exports',
                 );
             }
         }
@@ -44,7 +48,8 @@ export async function deployCommands({
 }: DeployCommandsOptions = {}): Promise<void> {
     if (!clientId || !discordToken) {
         logger.warn(
-            'CLIENT_ID or DISCORD_TOKEN is not configured; skipping Discord command registration.',
+            { event: 'discord_commands.unconfigured' },
+            'CLIENT_ID or DISCORD_TOKEN is not configured; skipping Discord command registration',
         );
         return;
     }
@@ -53,7 +58,11 @@ export async function deployCommands({
     const rest = new REST().setToken(discordToken);
     try {
         logger.info(
-            `Started refreshing ${commands.length} application (/) commands.`,
+            {
+                event: 'discord_commands.refresh_started',
+                commandCount: commands.length,
+            },
+            'started refreshing application commands',
         );
 
         // Register slash commands globally
@@ -62,10 +71,21 @@ export async function deployCommands({
         })) as unknown[];
 
         logger.info(
-            `Successfully reloaded ${data.length} application (/) commands.`,
+            {
+                event: 'discord_commands.refresh_completed',
+                commandCount: data.length,
+            },
+            'successfully refreshed application commands',
         );
     } catch (error) {
-        logger.error('Error refreshing commands: ', error);
+        logger.error(
+            {
+                event: 'discord_commands.refresh_failed',
+                commandCount: commands.length,
+                ...errorLogFields(error),
+            },
+            'failed to refresh application commands',
+        );
     }
 }
 

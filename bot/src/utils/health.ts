@@ -1,5 +1,5 @@
 import express from 'express';
-import logger from './logger';
+import logger from '../logging/logger';
 
 const app = express();
 const port = 3000;
@@ -9,5 +9,8 @@ app.get('/health', (req, res) => {
 });
 
 app.listen(port, () => {
-    logger.info(`Health check is running on port ${port}`);
+    logger.info(
+        { event: 'health_server.started', port },
+        'health check server started',
+    );
 });

@@ -1,16 +1,17 @@
 import { MessageFlags } from 'discord.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import interactionCreate from '../../src/events/interactionCreate';
-import logger from '../../src/utils/logger';
+import logger from '../../src/logging/logger';
 
 vi.mock('discord.js', () => ({
     Events: { InteractionCreate: 'interactionCreate' },
     MessageFlags: { Ephemeral: 64 },
 }));
 
-vi.mock('../../src/utils/logger', () => ({
+vi.mock('../../src/logging/logger', () => ({
     default: {
         info: vi.fn(),
+        warn: vi.fn(),
         error: vi.fn(),
     },
 }));
@@ -59,8 +60,13 @@ describe('interactionCreate event', () => {
             const interaction = makeAutocompleteInteraction('unknown');
             await execute(interaction);
 
-            expect(logger.error).toHaveBeenCalledWith(
-                expect.stringContaining('unknown'),
+            expect(logger.warn).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    event: 'interaction.command_missing',
+                    interactionType: 'autocomplete',
+                    commandName: 'unknown',
+                }),
+                'interaction command missing',
             );
         });
 
@@ -99,8 +105,12 @@ describe('interactionCreate event', () => {
             await execute(interaction);
 
             expect(logger.error).toHaveBeenCalledWith(
-                'Error in autocomplete:',
-                expect.any(Error),
+                expect.objectContaining({
+                    event: 'interaction.autocomplete_failed',
+                    commandName: 'testCmd',
+                    err: expect.any(Error),
+                }),
+                'interaction autocomplete failed',
             );
         });
     });
@@ -124,8 +134,13 @@ describe('interactionCreate event', () => {
             const interaction = makeChatInteraction({}, makeCommandsMap());
             await execute(interaction);
 
-            expect(logger.error).toHaveBeenCalledWith(
-                expect.stringContaining('testCmd'),
+            expect(logger.warn).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    event: 'interaction.command_missing',
+                    interactionType: 'chat_input',
+                    commandName: 'testCmd',
+                }),
+                'interaction command missing',
             );
         });
 

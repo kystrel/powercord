@@ -20,9 +20,8 @@
     "dotenv": "17.4.2",
     "express": "5.2.1",
     "match-sorter": "8.3.0",
-    "tslib": "2.8.1",
-    "winston": "3.19.0",
-    "winston-console-format": "1.0.8"
+    "pino": "9.14.0",
+    "tslib": "2.8.1"
   },
   "devDependencies": {
     "@types/express": "5.0.6",

@@ -8,14 +8,22 @@ import {
 } from 'discord.js';
 import { getEmbedColor, getEmbedFooter } from '../../constants/embed';
 import { api } from '../../data/api';
+import {
+    elapsedMs,
+    errorLogFields,
+    interactionLocation,
+} from '../../logging/fields';
+import logger from '../../logging/logger';
 import { TopLifter } from '../../types/types';
-import logger from '../../utils/logger';
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('top')
         .setDescription('Display top ranked lifters'),
     async execute(interaction: ChatInputCommandInteraction) {
+        const startedAt = Date.now();
+        const logContext = interactionLocation(interaction);
+
         try {
             await interaction.deferReply();
 
@@ -24,6 +32,17 @@ module.exports = {
 
             if (!allTopLifters || allTopLifters.length === 0) {
                 await interaction.editReply('No data found for top lifters.');
+                logger.info(
+                    {
+                        event: 'command.completed',
+                        commandName: 'top',
+                        outcome: 'not_found',
+                        resultCount: 0,
+                        ...logContext,
+                        duration_ms: elapsedMs(startedAt),
+                    },
+                    'command completed',
+                );
                 return;
             }
 
@@ -96,46 +115,121 @@ module.exports = {
             });
 
             collector.on('collect', async (i) => {
+                const paginationStartedAt = Date.now();
+                const previousPage = currentPage;
+                let targetPage = currentPage;
+
                 try {
                     if (i.customId === 'prev' && currentPage > 1) {
-                        currentPage--;
+                        targetPage = currentPage - 1;
                     } else if (
                         i.customId === 'next' &&
                         currentPage < maxPages
                     ) {
-                        currentPage++;
+                        targetPage = currentPage + 1;
                     } else {
                         return;
                     }
 
-                    updatePage(currentPage);
-                    buttons.components[0].setDisabled(currentPage === 1);
-                    buttons.components[1].setDisabled(currentPage === maxPages);
+                    updatePage(targetPage);
+                    buttons.components[0].setDisabled(targetPage === 1);
+                    buttons.components[1].setDisabled(targetPage === maxPages);
 
                     await i.update({ embeds: [embed], components: [buttons] });
+                    currentPage = targetPage;
+                    logger.info(
+                        {
+                            event: 'pagination.changed',
+                            commandName: 'top',
+                            action: i.customId,
+                            previousPage,
+                            page: targetPage,
+                            pageCount: maxPages,
+                            resultCount: allTopLifters.length,
+                            ...logContext,
+                            duration_ms: elapsedMs(paginationStartedAt),
+                        },
+                        'pagination changed',
+                    );
                 } catch (error) {
                     logger.error(
-                        'Error handling pagination interaction:',
-                        error,
+                        {
+                            event: 'pagination.failed',
+                            commandName: 'top',
+                            action: i.customId,
+                            previousPage,
+                            page: targetPage,
+                            pageCount: maxPages,
+                            resultCount: allTopLifters.length,
+                            ...logContext,
+                            duration_ms: elapsedMs(paginationStartedAt),
+                            ...errorLogFields(error),
+                        },
+                        'pagination failed',
                     );
                 }
             });
 
-            collector.on('end', () => {
+            collector.on('end', async () => {
+                const paginationStartedAt = Date.now();
+
                 try {
                     buttons.components.forEach((button) =>
                         button.setDisabled(true),
                     );
-                    interaction.editReply({ components: [buttons] });
+                    await interaction.editReply({ components: [buttons] });
+                    logger.info(
+                        {
+                            event: 'pagination.ended',
+                            commandName: 'top',
+                            page: currentPage,
+                            pageCount: maxPages,
+                            resultCount: allTopLifters.length,
+                            ...logContext,
+                            duration_ms: elapsedMs(paginationStartedAt),
+                        },
+                        'pagination ended',
+                    );
                 } catch (error) {
                     logger.error(
-                        'Error disabling buttons on collector end:',
-                        error,
+                        {
+                            event: 'pagination.disable_failed',
+                            commandName: 'top',
+                            page: currentPage,
+                            pageCount: maxPages,
+                            resultCount: allTopLifters.length,
+                            ...logContext,
+                            duration_ms: elapsedMs(paginationStartedAt),
+                            ...errorLogFields(error),
+                        },
+                        'pagination disable failed',
                     );
                 }
             });
+
+            logger.info(
+                {
+                    event: 'command.completed',
+                    commandName: 'top',
+                    outcome: 'success',
+                    resultCount: allTopLifters.length,
+                    pageCount: maxPages,
+                    ...logContext,
+                    duration_ms: elapsedMs(startedAt),
+                },
+                'command completed',
+            );
         } catch (error) {
-            logger.error('Error executing /top command:', error);
+            logger.error(
+                {
+                    event: 'command.failed',
+                    commandName: 'top',
+                    ...logContext,
+                    duration_ms: elapsedMs(startedAt),
+                    ...errorLogFields(error),
+                },
+                'command failed',
+            );
             if (interaction.deferred || interaction.replied) {
                 await interaction.editReply({
                     content:

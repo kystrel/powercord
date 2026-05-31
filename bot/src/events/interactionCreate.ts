@@ -1,5 +1,6 @@
 import { Events, Interaction, MessageFlags } from 'discord.js';
-import logger from '../utils/logger';
+import { errorLogFields, interactionLocation } from '../logging/fields';
+import logger from '../logging/logger';
 
 export default {
     name: Events.InteractionCreate,
@@ -10,8 +11,14 @@ export default {
             );
 
             if (!command) {
-                logger.error(
-                    `No command matching ${interaction.commandName} was found.`,
+                logger.warn(
+                    {
+                        event: 'interaction.command_missing',
+                        interactionType: 'autocomplete',
+                        commandName: interaction.commandName,
+                        ...interactionLocation(interaction),
+                    },
+                    'interaction command missing',
                 );
                 return;
             }
@@ -23,7 +30,15 @@ export default {
             try {
                 await command.autocomplete(interaction);
             } catch (error) {
-                logger.error('Error in autocomplete:', error);
+                logger.error(
+                    {
+                        event: 'interaction.autocomplete_failed',
+                        commandName: interaction.commandName,
+                        ...interactionLocation(interaction),
+                        ...errorLogFields(error),
+                    },
+                    'interaction autocomplete failed',
+                );
             }
             return;
         }
@@ -34,8 +49,14 @@ export default {
         );
 
         if (!command) {
-            logger.error(
-                `No command matching ${interaction.commandName} was found.`,
+            logger.warn(
+                {
+                    event: 'interaction.command_missing',
+                    interactionType: 'chat_input',
+                    commandName: interaction.commandName,
+                    ...interactionLocation(interaction),
+                },
+                'interaction command missing',
             );
             return;
         }
@@ -43,7 +64,15 @@ export default {
         try {
             await command.execute(interaction);
         } catch (error) {
-            logger.error(error);
+            logger.error(
+                {
+                    event: 'interaction.command_failed',
+                    commandName: interaction.commandName,
+                    ...interactionLocation(interaction),
+                    ...errorLogFields(error),
+                },
+                'interaction command failed',
+            );
             if (interaction.replied || interaction.deferred) {
                 await interaction.followUp({
                     content: 'There was an error while executing this command!',
