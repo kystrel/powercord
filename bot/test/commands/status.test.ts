@@ -1,5 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as statusCommand from '../../src/commands/utility/status';
+import logger from '../../src/logging/logger';
 
 vi.mock('discord.js');
 
@@ -35,6 +36,11 @@ const makeInteraction = (latencyMs = 50) => {
 describe('Status command', () => {
     const execute = statusCommand['execute'];
 
+    beforeEach(() => {
+        vi.mocked(logger.info).mockClear();
+        vi.mocked(logger.error).mockClear();
+    });
+
     it('replies to measure latency then edits reply with embed', async () => {
         const interaction = makeInteraction();
         await execute(interaction as any);
@@ -63,5 +69,29 @@ describe('Status command', () => {
         await execute(interaction as any);
 
         expect(interaction.client.guilds.fetch).toHaveBeenCalled();
+    });
+
+    it('replies ephemerally with error when reply throws and interaction is not deferred', async () => {
+        const interaction = makeInteraction();
+        vi.mocked(interaction.reply).mockRejectedValueOnce(new Error('Discord error'));
+        await execute(interaction as any);
+
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({ event: 'command.failed', commandName: 'status' }),
+            'command failed',
+        );
+        expect(interaction.reply).toHaveBeenLastCalledWith(
+            expect.objectContaining({ content: 'An error occurred while fetching the status.', ephemeral: true }),
+        );
+    });
+
+    it('edits reply with error when interaction is deferred', async () => {
+        const interaction = { ...makeInteraction(), deferred: true, replied: false };
+        vi.mocked(interaction.reply).mockRejectedValueOnce(new Error('Discord error'));
+        await execute(interaction as any);
+
+        expect(interaction.editReply).toHaveBeenCalledWith(
+            expect.objectContaining({ content: 'An error occurred while fetching the status.' }),
+        );
     });
 });

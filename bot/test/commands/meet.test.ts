@@ -322,6 +322,32 @@ describe('Meet command', () => {
         );
     });
 
+    it('logs error when end handler throws', async () => {
+        mockGetMeet.mockResolvedValue(mockMultiPageMeet);
+        const { interaction, handlers } = createPaginationInteraction({
+            name: 'Multi Page Meet',
+        });
+        await execute(interaction as any);
+
+        vi.mocked(interaction.editReply).mockImplementationOnce(() => {
+            throw new Error('edit failed');
+        });
+        handlers['end']();
+
+        expect(vi.mocked(logger.error)).toHaveBeenCalledWith(
+            expect.objectContaining({
+                event: 'pagination.disable_failed',
+                commandName: 'meet',
+                input: 'Multi Page Meet',
+                page: 1,
+                pageCount: 2,
+                entryCount: 6,
+                err: expect.any(Error),
+            }),
+            'pagination disable failed',
+        );
+    });
+
     describe('autocomplete', () => {
         it('responds with empty array for short queries', async () => {
             const interaction = createAutocompleteInteraction('L');

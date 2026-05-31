@@ -1,10 +1,9 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { REST, Routes } from 'discord.js';
 import { errorLogFields } from './logging/fields';
 import logger from './logging/logger';
 import { config } from './utils/config';
-
-const fs = require('node:fs');
-const path = require('node:path');
 
 interface DeployCommandsOptions {
     clientId?: string;
