@@ -37,7 +37,16 @@ module.exports = {
                 },
                 'command failed',
             );
-            throw error;
+            if (interaction.deferred || interaction.replied) {
+                await interaction.editReply({
+                    content: 'An error occurred.',
+                });
+            } else {
+                await interaction.reply({
+                    content: 'An error occurred.',
+                    ephemeral: true,
+                });
+            }
         }
     },
 };

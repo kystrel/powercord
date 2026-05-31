@@ -115,32 +115,54 @@ module.exports = {
             });
 
             collector.on('collect', async (i) => {
+                const paginationStartedAt = Date.now();
+                const previousPage = currentPage;
+                let targetPage = currentPage;
+
                 try {
                     if (i.customId === 'prev' && currentPage > 1) {
-                        currentPage--;
+                        targetPage = currentPage - 1;
                     } else if (
                         i.customId === 'next' &&
                         currentPage < maxPages
                     ) {
-                        currentPage++;
+                        targetPage = currentPage + 1;
                     } else {
                         return;
                     }
 
-                    updatePage(currentPage);
-                    buttons.components[0].setDisabled(currentPage === 1);
-                    buttons.components[1].setDisabled(currentPage === maxPages);
+                    updatePage(targetPage);
+                    buttons.components[0].setDisabled(targetPage === 1);
+                    buttons.components[1].setDisabled(targetPage === maxPages);
 
                     await i.update({ embeds: [embed], components: [buttons] });
+                    currentPage = targetPage;
+                    logger.info(
+                        {
+                            event: 'pagination.changed',
+                            commandName: 'top',
+                            action: i.customId,
+                            previousPage,
+                            page: targetPage,
+                            pageCount: maxPages,
+                            resultCount: allTopLifters.length,
+                            ...logContext,
+                            duration_ms: elapsedMs(paginationStartedAt),
+                        },
+                        'pagination changed',
+                    );
                 } catch (error) {
                     logger.error(
                         {
                             event: 'pagination.failed',
                             commandName: 'top',
                             action: i.customId,
-                            page: currentPage,
+                            previousPage,
+                            page: targetPage,
+                            pageCount: maxPages,
+                            resultCount: allTopLifters.length,
                             ...logContext,
-                            duration_ms: elapsedMs(startedAt),
+                            duration_ms: elapsedMs(paginationStartedAt),
                             ...errorLogFields(error),
                         },
                         'pagination failed',
@@ -149,19 +171,35 @@ module.exports = {
             });
 
             collector.on('end', async () => {
+                const paginationStartedAt = Date.now();
+
                 try {
                     buttons.components.forEach((button) =>
                         button.setDisabled(true),
                     );
                     await interaction.editReply({ components: [buttons] });
+                    logger.info(
+                        {
+                            event: 'pagination.ended',
+                            commandName: 'top',
+                            page: currentPage,
+                            pageCount: maxPages,
+                            resultCount: allTopLifters.length,
+                            ...logContext,
+                            duration_ms: elapsedMs(paginationStartedAt),
+                        },
+                        'pagination ended',
+                    );
                 } catch (error) {
                     logger.error(
                         {
                             event: 'pagination.disable_failed',
                             commandName: 'top',
                             page: currentPage,
+                            pageCount: maxPages,
+                            resultCount: allTopLifters.length,
                             ...logContext,
-                            duration_ms: elapsedMs(startedAt),
+                            duration_ms: elapsedMs(paginationStartedAt),
                             ...errorLogFields(error),
                         },
                         'pagination disable failed',

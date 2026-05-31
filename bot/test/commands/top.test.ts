@@ -54,6 +54,8 @@ describe('Top command', () => {
 
     beforeEach(() => {
         mockGetTopLifters.mockReset();
+        vi.mocked(logger.info).mockClear();
+        vi.mocked(logger.error).mockClear();
     });
 
     it('replies with not-found message when no data exists', async () => {
@@ -153,6 +155,19 @@ describe('Top command', () => {
         expect(buttonInteraction.update).toHaveBeenCalledWith(
             expect.objectContaining({ embeds: expect.any(Array) }),
         );
+        expect(logger.info).toHaveBeenCalledWith(
+            expect.objectContaining({
+                event: 'pagination.changed',
+                commandName: 'top',
+                action: 'next',
+                previousPage: 1,
+                page: 2,
+                pageCount: 2,
+                resultCount: 6,
+                duration_ms: expect.any(Number),
+            }),
+            'pagination changed',
+        );
         const { embeds } = vi.mocked(buttonInteraction.update).mock
             .calls[0][0] as any;
         expect(embeds[0].description).toContain('Page 2');
@@ -214,9 +229,31 @@ describe('Top command', () => {
                 event: 'pagination.failed',
                 commandName: 'top',
                 action: 'next',
+                previousPage: 1,
+                page: 2,
+                pageCount: 2,
+                resultCount: 6,
                 err: expect.any(Error),
             }),
             'pagination failed',
+        );
+
+        const retryInteraction = {
+            customId: 'next',
+            user: { id: '12345' },
+            update: vi.fn().mockResolvedValue(undefined),
+        };
+        await handlers['collect'](retryInteraction);
+
+        expect(logger.info).toHaveBeenCalledWith(
+            expect.objectContaining({
+                event: 'pagination.changed',
+                commandName: 'top',
+                action: 'next',
+                previousPage: 1,
+                page: 2,
+            }),
+            'pagination changed',
         );
     });
 
@@ -234,6 +271,9 @@ describe('Top command', () => {
             expect.objectContaining({
                 event: 'pagination.disable_failed',
                 commandName: 'top',
+                page: 1,
+                pageCount: 2,
+                resultCount: 6,
                 err: expect.any(Error),
             }),
             'pagination disable failed',
@@ -245,12 +285,23 @@ describe('Top command', () => {
         const { interaction, handlers } = createPaginationInteraction();
         await execute(interaction as any);
 
-        handlers['end']();
+        await handlers['end']();
 
         const lastCall = vi
             .mocked(interaction.editReply)
             .mock.calls.at(-1)![0] as any;
         expect(lastCall.components[0].components[0].disabled).toBe(true);
         expect(lastCall.components[0].components[1].disabled).toBe(true);
+        expect(logger.info).toHaveBeenCalledWith(
+            expect.objectContaining({
+                event: 'pagination.ended',
+                commandName: 'top',
+                page: 1,
+                pageCount: 2,
+                resultCount: 6,
+                duration_ms: expect.any(Number),
+            }),
+            'pagination ended',
+        );
     });
 });

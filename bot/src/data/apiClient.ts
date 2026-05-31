@@ -4,7 +4,7 @@ import logger from '../logging/logger';
 import type { Lifter, Meet, TopLifter } from '../types/types';
 import { config } from '../utils/config';
 
-let api = axios.create({
+const api = axios.create({
     baseURL: config.API_BASE_URL,
     timeout: 20000,
     headers: { 'Content-Type': 'application/json' },

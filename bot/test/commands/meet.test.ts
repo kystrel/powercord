@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as meetCommand from '../../src/commands/opl/meet';
+import logger from '../../src/logging/logger';
 import {
     createAutocompleteInteraction,
     createChatInputInteraction,
@@ -78,6 +79,8 @@ describe('Meet command', () => {
     beforeEach(() => {
         mockGetMeet.mockReset();
         mockGetMeetAutocomplete.mockReset();
+        vi.mocked(logger.info).mockClear();
+        vi.mocked(logger.error).mockClear();
     });
 
     it('generates an embed with meet data', async () => {
@@ -177,6 +180,20 @@ describe('Meet command', () => {
         expect(buttonInteraction.update).toHaveBeenCalledWith(
             expect.objectContaining({ embeds: expect.any(Array) }),
         );
+        expect(logger.info).toHaveBeenCalledWith(
+            expect.objectContaining({
+                event: 'pagination.changed',
+                commandName: 'meet',
+                action: 'next',
+                input: 'Multi Page Meet',
+                previousPage: 1,
+                page: 2,
+                pageCount: 2,
+                entryCount: 6,
+                duration_ms: expect.any(Number),
+            }),
+            'pagination changed',
+        );
         const { embeds } = vi.mocked(buttonInteraction.update).mock
             .calls[0][0] as any;
         expect(embeds[0].description).toContain('page 2');
@@ -255,6 +272,56 @@ describe('Meet command', () => {
         expect(buttonInteraction.update).not.toHaveBeenCalled();
     });
 
+    it('logs error when collect handler throws', async () => {
+        mockGetMeet.mockResolvedValue(mockMultiPageMeet);
+        const { interaction, handlers } = createPaginationInteraction({
+            name: 'Multi Page Meet',
+        });
+        await execute(interaction as any);
+
+        const buttonInteraction = {
+            customId: 'next',
+            user: { id: '12345' },
+            update: vi.fn().mockRejectedValue(new Error('update failed')),
+        };
+        await handlers['collect'](buttonInteraction);
+
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                event: 'pagination.failed',
+                commandName: 'meet',
+                action: 'next',
+                input: 'Multi Page Meet',
+                previousPage: 1,
+                page: 2,
+                pageCount: 2,
+                entryCount: 6,
+                duration_ms: expect.any(Number),
+                err: expect.any(Error),
+            }),
+            'pagination failed',
+        );
+
+        const retryInteraction = {
+            customId: 'next',
+            user: { id: '12345' },
+            update: vi.fn().mockResolvedValue(undefined),
+        };
+        await handlers['collect'](retryInteraction);
+
+        expect(logger.info).toHaveBeenCalledWith(
+            expect.objectContaining({
+                event: 'pagination.changed',
+                commandName: 'meet',
+                action: 'next',
+                input: 'Multi Page Meet',
+                previousPage: 1,
+                page: 2,
+            }),
+            'pagination changed',
+        );
+    });
+
     describe('autocomplete', () => {
         it('responds with empty array for short queries', async () => {
             const interaction = createAutocompleteInteraction('L');
@@ -304,12 +371,24 @@ describe('Meet command', () => {
         });
         await execute(interaction as any);
 
-        handlers['end']();
+        await handlers['end']();
 
         const lastCall = vi
             .mocked(interaction.editReply)
             .mock.calls.at(-1)![0] as any;
         expect(lastCall.components[0].components[0].disabled).toBe(true);
         expect(lastCall.components[0].components[1].disabled).toBe(true);
+        expect(logger.info).toHaveBeenCalledWith(
+            expect.objectContaining({
+                event: 'pagination.ended',
+                commandName: 'meet',
+                input: 'Multi Page Meet',
+                page: 1,
+                pageCount: 2,
+                entryCount: 6,
+                duration_ms: expect.any(Number),
+            }),
+            'pagination ended',
+        );
     });
 });
