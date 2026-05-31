@@ -6,10 +6,10 @@ import {
     getMeetAutocomplete,
     getTopLifters,
 } from '../../src/data/apiClient';
+import logger from '../../src/logging/logger';
 import { Lifter, Meet, TopLifter } from '../../src/types/types';
-import logger from '../../src/utils/logger';
 
-vi.mock('../../src/utils/logger', () => ({
+vi.mock('../../src/logging/logger', () => ({
     default: {
         info: vi.fn(),
         error: vi.fn(),
@@ -155,8 +155,13 @@ describe('apiClient', () => {
 
         expect(result).toBeUndefined();
         expect(logger.error).toHaveBeenCalledWith(
-            'Error fetching lifter:',
-            expect.any(Error),
+            expect.objectContaining({
+                event: 'api_client.request_failed',
+                route: '/api/lifters',
+                query: 'Jane Doe',
+                err: expect.any(Error),
+            }),
+            'api client request failed',
         );
     });
 
@@ -166,8 +171,13 @@ describe('apiClient', () => {
 
         expect(result).toBeUndefined();
         expect(logger.error).toHaveBeenCalledWith(
-            'Error fetching meet:',
-            expect.any(Error),
+            expect.objectContaining({
+                event: 'api_client.request_failed',
+                route: '/api/meets',
+                query: 'Mock Meet',
+                err: expect.any(Error),
+            }),
+            'api client request failed',
         );
     });
 
@@ -177,8 +187,13 @@ describe('apiClient', () => {
 
         expect(result).toBeUndefined();
         expect(logger.error).toHaveBeenCalledWith(
-            'Error fetching top lifters:',
-            expect.any(Error),
+            expect.objectContaining({
+                event: 'api_client.request_failed',
+                route: '/api/top',
+                page: 1,
+                err: expect.any(Error),
+            }),
+            'api client request failed',
         );
     });
 
@@ -196,8 +211,13 @@ describe('apiClient', () => {
 
         expect(result).toBeUndefined();
         expect(logger.error).toHaveBeenCalledWith(
-            'Error fetching lifter autocomplete:',
-            expect.any(Error),
+            expect.objectContaining({
+                event: 'api_client.request_failed',
+                route: '/api/lifters/autocomplete',
+                query: 'Jane',
+                err: expect.any(Error),
+            }),
+            'api client request failed',
         );
     });
 
@@ -217,8 +237,13 @@ describe('apiClient', () => {
 
         expect(result).toBeUndefined();
         expect(logger.error).toHaveBeenCalledWith(
-            'Error fetching meet autocomplete:',
-            expect.any(Error),
+            expect.objectContaining({
+                event: 'api_client.request_failed',
+                route: '/api/meets/autocomplete',
+                query: 'Mock',
+                err: expect.any(Error),
+            }),
+            'api client request failed',
         );
     });
 });

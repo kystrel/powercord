@@ -11,7 +11,7 @@ const { mockGetMeet, mockGetMeetAutocomplete } = vi.hoisted(() => ({
     mockGetMeetAutocomplete: vi.fn(),
 }));
 
-vi.mock('../../src/utils/logger', () => ({
+vi.mock('../../src/logging/logger', () => ({
     default: {
         info: vi.fn(),
         error: vi.fn(),

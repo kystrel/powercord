@@ -1,10 +1,10 @@
 import { Client, Events } from 'discord.js';
-import logger from '../utils/logger';
+import logger from '../logging/logger';
 
 export default {
     name: Events.ClientReady,
     once: true,
-    execute(client: Client) {
-        logger.info(`Ready! Logged in as ${client.user?.tag}`);
+    execute(_client: Client) {
+        logger.info({ event: 'bot.ready' }, 'bot ready');
     },
 };

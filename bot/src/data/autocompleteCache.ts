@@ -1,7 +1,8 @@
 import { gunzipSync } from 'node:zlib';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { elapsedMs, errorLogFields } from '../logging/fields';
+import logger from '../logging/logger';
 import { config } from '../utils/config';
-import logger from '../utils/logger';
 
 const LIFTERS_KEY = 'autocomplete/lifters.json.gz';
 const MEETS_KEY = 'autocomplete/meets.json.gz';
@@ -25,10 +26,10 @@ type AutocompleteSnapshot = {
 };
 
 type CacheLogger = {
-    debug(message: string, ...meta: unknown[]): void;
-    info(message: string, ...meta: unknown[]): void;
-    warn(message: string, ...meta: unknown[]): void;
-    error(message: string, ...meta: unknown[]): void;
+    debug(fields: Record<string, unknown>, message: string): void;
+    info(fields: Record<string, unknown>, message: string): void;
+    warn(fields: Record<string, unknown>, message: string): void;
+    error(fields: Record<string, unknown>, message: string): void;
 };
 
 export type AutocompleteFallback = (
@@ -109,7 +110,8 @@ export class AutocompleteCache {
     start(): void {
         if (!this.options.bucket) {
             this.options.logger.warn(
-                'STATIC_BUCKET is not configured; autocomplete will use HTTP fallback.',
+                { event: 'autocomplete_cache.unconfigured' },
+                'STATIC_BUCKET is not configured; autocomplete will use HTTP fallback',
             );
             return;
         }
@@ -139,8 +141,11 @@ export class AutocompleteCache {
         this.refreshPromise = this.loadSnapshot(bucket)
             .catch((error: unknown) => {
                 this.options.logger.error(
-                    'Autocomplete cache refresh failed:',
-                    error,
+                    {
+                        event: 'autocomplete_cache.refresh_failed',
+                        ...errorLogFields(error),
+                    },
+                    'autocomplete cache refresh failed',
                 );
             })
             .finally(() => {
@@ -185,35 +190,51 @@ export class AutocompleteCache {
             const names =
                 kind === 'lifters' ? snapshot.lifterNames : snapshot.meetNames;
             const results = searchAutocompleteNames(names, query, safeLimit);
-            this.options.logger.debug('Autocomplete cache hit', {
-                kind,
-                queryLength: query.length,
-                resultCount: results.length,
-                durationMs: Date.now() - startedAt,
-                revision: snapshot.revision,
-            });
+            this.options.logger.debug(
+                {
+                    event: 'autocomplete_cache.hit',
+                    kind,
+                    query,
+                    queryLength: query.length,
+                    resultCount: results.length,
+                    duration_ms: elapsedMs(startedAt),
+                    revision: snapshot.revision,
+                },
+                'autocomplete cache hit',
+            );
             return results;
         }
 
         if (this.options.bucket) void this.refresh();
 
-        this.options.logger.debug('Autocomplete cache miss; using fallback', {
-            kind,
-            queryLength: query.length,
-        });
+        this.options.logger.debug(
+            {
+                event: 'autocomplete_cache.miss',
+                kind,
+                query,
+                queryLength: query.length,
+            },
+            'autocomplete cache miss; using fallback',
+        );
         return fallback(query, safeLimit);
     }
 
     private async loadSnapshot(bucket: string): Promise<void> {
+        const startedAt = Date.now();
         const manifest = await this.loadJson<unknown>(bucket, MANIFEST_KEY);
         if (!isManifest(manifest)) {
             throw new Error('Invalid autocomplete manifest payload');
         }
 
         if (this.snapshot?.revision === manifest.revision) {
-            this.options.logger.debug('Autocomplete cache already current', {
-                revision: manifest.revision,
-            });
+            this.options.logger.debug(
+                {
+                    event: 'autocomplete_cache.current',
+                    revision: manifest.revision,
+                    duration_ms: elapsedMs(startedAt),
+                },
+                'autocomplete cache already current',
+            );
             return;
         }
 
@@ -240,14 +261,19 @@ export class AutocompleteCache {
             meetNames,
         };
 
-        this.options.logger.info('Autocomplete cache loaded', {
-            revision: manifest.revision,
-            updatedAt: manifest.updatedAt,
-            loadedAt,
-            lifterCount: lifterNames.length,
-            meetCount: meetNames.length,
-            bucket,
-        });
+        this.options.logger.info(
+            {
+                event: 'autocomplete_cache.loaded',
+                revision: manifest.revision,
+                updatedAt: manifest.updatedAt,
+                loadedAt,
+                lifterCount: lifterNames.length,
+                meetCount: meetNames.length,
+                bucket,
+                duration_ms: elapsedMs(startedAt),
+            },
+            'autocomplete cache loaded',
+        );
     }
 
     private async loadJson<T>(bucket: string, key: string): Promise<T> {

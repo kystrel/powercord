@@ -134,12 +134,13 @@ describe('AutocompleteCache', () => {
             meetNames: ['2025 USAPL Raw Nationals'],
         });
         expect(logger.info).toHaveBeenCalledWith(
-            'Autocomplete cache loaded',
             expect.objectContaining({
+                event: 'autocomplete_cache.loaded',
                 revision: 'rev1',
                 lifterCount: 2,
                 meetCount: 1,
             }),
+            'autocomplete cache loaded',
         );
     });
 
@@ -225,8 +226,11 @@ describe('AutocompleteCache', () => {
 
         expect(cache.getSnapshot()?.revision).toBe('rev1');
         expect(logger.error).toHaveBeenCalledWith(
-            'Autocomplete cache refresh failed:',
-            expect.any(Error),
+            expect.objectContaining({
+                event: 'autocomplete_cache.refresh_failed',
+                err: expect.any(Error),
+            }),
+            'autocomplete cache refresh failed',
         );
     });
 
@@ -263,7 +267,8 @@ describe('AutocompleteCache', () => {
         cache.stop();
 
         expect(logger.warn).toHaveBeenCalledWith(
-            'STATIC_BUCKET is not configured; autocomplete will use HTTP fallback.',
+            { event: 'autocomplete_cache.unconfigured' },
+            'STATIC_BUCKET is not configured; autocomplete will use HTTP fallback',
         );
     });
 
@@ -282,10 +287,13 @@ describe('AutocompleteCache', () => {
         await cache.refresh();
 
         expect(logger.error).toHaveBeenCalledWith(
-            'Autocomplete cache refresh failed:',
             expect.objectContaining({
-                message: 'Invalid autocomplete manifest payload',
+                event: 'autocomplete_cache.refresh_failed',
+                err: expect.objectContaining({
+                    message: 'Invalid autocomplete manifest payload',
+                }),
             }),
+            'autocomplete cache refresh failed',
         );
     });
 
@@ -304,10 +312,13 @@ describe('AutocompleteCache', () => {
         await cache.refresh();
 
         expect(logger.error).toHaveBeenCalledWith(
-            'Autocomplete cache refresh failed:',
             expect.objectContaining({
-                message: 'Invalid autocomplete manifest payload',
+                event: 'autocomplete_cache.refresh_failed',
+                err: expect.objectContaining({
+                    message: 'Invalid autocomplete manifest payload',
+                }),
             }),
+            'autocomplete cache refresh failed',
         );
     });
 
@@ -324,10 +335,13 @@ describe('AutocompleteCache', () => {
         await cache.refresh();
 
         expect(logger.error).toHaveBeenCalledWith(
-            'Autocomplete cache refresh failed:',
             expect.objectContaining({
-                message: 'Invalid meet autocomplete payload',
+                event: 'autocomplete_cache.refresh_failed',
+                err: expect.objectContaining({
+                    message: 'Invalid meet autocomplete payload',
+                }),
             }),
+            'autocomplete cache refresh failed',
         );
     });
 
@@ -345,10 +359,13 @@ describe('AutocompleteCache', () => {
         await cache.refresh();
 
         expect(logger.error).toHaveBeenCalledWith(
-            'Autocomplete cache refresh failed:',
             expect.objectContaining({
-                message: expect.stringContaining('no body'),
+                event: 'autocomplete_cache.refresh_failed',
+                err: expect.objectContaining({
+                    message: expect.stringContaining('no body'),
+                }),
             }),
+            'autocomplete cache refresh failed',
         );
     });
 

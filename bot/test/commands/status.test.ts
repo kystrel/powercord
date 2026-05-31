@@ -3,7 +3,7 @@ import * as statusCommand from '../../src/commands/utility/status';
 
 vi.mock('discord.js');
 
-vi.mock('../../src/utils/logger', () => ({
+vi.mock('../../src/logging/logger', () => ({
     default: {
         info: vi.fn(),
         error: vi.fn(),

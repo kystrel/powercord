@@ -7,8 +7,13 @@ import {
 } from 'discord.js';
 import { getEmbedColor, getEmbedFooter } from '../../constants/embed';
 import { api } from '../../data/api';
+import {
+    elapsedMs,
+    errorLogFields,
+    interactionLocation,
+} from '../../logging/fields';
+import logger from '../../logging/logger';
 import { Lifter } from '../../types/types';
-import logger from '../../utils/logger';
 
 async function fetchLifter(name: string): Promise<Lifter | undefined> {
     return api.getLifter(name);
@@ -26,13 +31,28 @@ module.exports = {
                 .setAutocomplete(true),
         ),
     async execute(interaction: ChatInputCommandInteraction) {
+        const startedAt = Date.now();
+        const logContext = interactionLocation(interaction);
+        let input: string | undefined;
+
         try {
             await interaction.deferReply();
 
             const name = interaction.options.getString('name');
+            input = name ?? undefined;
             if (!name) {
                 await interaction.editReply(
                     'You need to specify a lifter name.',
+                );
+                logger.info(
+                    {
+                        event: 'command.completed',
+                        commandName: 'lifter',
+                        outcome: 'missing_input',
+                        ...logContext,
+                        duration_ms: elapsedMs(startedAt),
+                    },
+                    'command completed',
                 );
                 return;
             }
@@ -42,6 +62,18 @@ module.exports = {
             if (!lifter || lifter.meets.length === 0) {
                 await interaction.editReply(
                     `No data found for lifter: ${name}.`,
+                );
+                logger.info(
+                    {
+                        event: 'command.completed',
+                        commandName: 'lifter',
+                        outcome: 'not_found',
+                        input: name,
+                        found: false,
+                        ...logContext,
+                        duration_ms: elapsedMs(startedAt),
+                    },
+                    'command completed',
                 );
                 return;
             }
@@ -95,8 +127,32 @@ module.exports = {
             embed.addFields(fields);
 
             await interaction.editReply({ embeds: [embed] });
+            logger.info(
+                {
+                    event: 'command.completed',
+                    commandName: 'lifter',
+                    outcome: 'success',
+                    input: name,
+                    found: true,
+                    meetCount: lifter.meets.length,
+                    personalBestCount: lifter.personalBests?.length ?? 0,
+                    ...logContext,
+                    duration_ms: elapsedMs(startedAt),
+                },
+                'command completed',
+            );
         } catch (error) {
-            logger.error('Error executing /lifter command:', error);
+            logger.error(
+                {
+                    event: 'command.failed',
+                    commandName: 'lifter',
+                    input,
+                    ...logContext,
+                    duration_ms: elapsedMs(startedAt),
+                    ...errorLogFields(error),
+                },
+                'command failed',
+            );
             if (interaction.deferred || interaction.replied) {
                 await interaction.editReply({
                     content:
@@ -112,11 +168,30 @@ module.exports = {
         }
     },
     async autocomplete(interaction: AutocompleteInteraction) {
+        const startedAt = Date.now();
+        const logContext = interactionLocation(interaction);
+        let query = '';
+
         try {
-            const focusedValue = interaction.options.getFocused();
+            const focusedValue = String(interaction.options.getFocused());
+            query = focusedValue;
 
             if (!focusedValue || focusedValue.length < 2) {
                 await interaction.respond([]);
+                logger.info(
+                    {
+                        event: 'autocomplete.completed',
+                        commandName: 'lifter',
+                        autocompleteKind: 'lifter',
+                        outcome: 'skipped',
+                        query,
+                        queryLength: query.length,
+                        resultCount: 0,
+                        ...logContext,
+                        duration_ms: elapsedMs(startedAt),
+                    },
+                    'autocomplete completed',
+                );
                 return;
             }
 
@@ -127,6 +202,20 @@ module.exports = {
 
             if (!lifterNames) {
                 await interaction.respond([]);
+                logger.info(
+                    {
+                        event: 'autocomplete.completed',
+                        commandName: 'lifter',
+                        autocompleteKind: 'lifter',
+                        outcome: 'empty',
+                        query,
+                        queryLength: query.length,
+                        resultCount: 0,
+                        ...logContext,
+                        duration_ms: elapsedMs(startedAt),
+                    },
+                    'autocomplete completed',
+                );
                 return;
             }
 
@@ -136,8 +225,34 @@ module.exports = {
             }));
 
             await interaction.respond(choices);
+            logger.info(
+                {
+                    event: 'autocomplete.completed',
+                    commandName: 'lifter',
+                    autocompleteKind: 'lifter',
+                    outcome: 'success',
+                    query,
+                    queryLength: query.length,
+                    resultCount: choices.length,
+                    ...logContext,
+                    duration_ms: elapsedMs(startedAt),
+                },
+                'autocomplete completed',
+            );
         } catch (error) {
-            logger.error('Error in lifter autocomplete:', error);
+            logger.error(
+                {
+                    event: 'autocomplete.failed',
+                    commandName: 'lifter',
+                    autocompleteKind: 'lifter',
+                    query,
+                    queryLength: query.length,
+                    ...logContext,
+                    duration_ms: elapsedMs(startedAt),
+                    ...errorLogFields(error),
+                },
+                'autocomplete failed',
+            );
             await interaction.respond([]);
         }
     },

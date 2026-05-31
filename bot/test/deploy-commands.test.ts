@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { deployCommands } from '../src/deploy-commands';
-import logger from '../src/utils/logger';
+import logger from '../src/logging/logger';
 
 const { mockRest, mockSetToken } = vi.hoisted(() => ({
     mockRest: vi.fn(),
     mockSetToken: vi.fn(),
 }));
 
-vi.mock('../src/utils/logger', () => ({
+vi.mock('../src/logging/logger', () => ({
     default: {
         info: vi.fn(),
         warn: vi.fn(),
@@ -39,7 +39,8 @@ describe('deployCommands', () => {
         await deployCommands();
 
         expect(logger.warn).toHaveBeenCalledWith(
-            'CLIENT_ID or DISCORD_TOKEN is not configured; skipping Discord command registration.',
+            { event: 'discord_commands.unconfigured' },
+            'CLIENT_ID or DISCORD_TOKEN is not configured; skipping Discord command registration',
         );
         expect(mockRest).not.toHaveBeenCalled();
         expect(mockSetToken).not.toHaveBeenCalled();

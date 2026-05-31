@@ -4,6 +4,13 @@ import { createChatInputInteraction } from '../helpers/interactions';
 
 vi.mock('discord.js');
 
+vi.mock('../../src/logging/logger', () => ({
+    default: {
+        info: vi.fn(),
+        error: vi.fn(),
+    },
+}));
+
 describe('Ping command', () => {
     const execute = pingCommand['execute'];
 

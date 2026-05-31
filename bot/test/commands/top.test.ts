@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as topCommand from '../../src/commands/opl/top';
-import logger from '../../src/utils/logger';
+import logger from '../../src/logging/logger';
 import {
     createChatInputInteraction,
     createPaginationInteraction,
@@ -8,7 +8,7 @@ import {
 
 const mockGetTopLifters = vi.hoisted(() => vi.fn());
 
-vi.mock('../../src/utils/logger', () => ({
+vi.mock('../../src/logging/logger', () => ({
     default: {
         info: vi.fn(),
         error: vi.fn(),
@@ -210,8 +210,13 @@ describe('Top command', () => {
         await handlers['collect'](buttonInteraction);
 
         expect(vi.mocked(logger.error)).toHaveBeenCalledWith(
-            'Error handling pagination interaction:',
-            expect.any(Error),
+            expect.objectContaining({
+                event: 'pagination.failed',
+                commandName: 'top',
+                action: 'next',
+                err: expect.any(Error),
+            }),
+            'pagination failed',
         );
     });
 
@@ -226,8 +231,12 @@ describe('Top command', () => {
         handlers['end']();
 
         expect(vi.mocked(logger.error)).toHaveBeenCalledWith(
-            'Error disabling buttons on collector end:',
-            expect.any(Error),
+            expect.objectContaining({
+                event: 'pagination.disable_failed',
+                commandName: 'top',
+                err: expect.any(Error),
+            }),
+            'pagination disable failed',
         );
     });
 

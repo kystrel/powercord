@@ -8,14 +8,22 @@ import {
 } from 'discord.js';
 import { getEmbedColor, getEmbedFooter } from '../../constants/embed';
 import { api } from '../../data/api';
+import {
+    elapsedMs,
+    errorLogFields,
+    interactionLocation,
+} from '../../logging/fields';
+import logger from '../../logging/logger';
 import { TopLifter } from '../../types/types';
-import logger from '../../utils/logger';
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('top')
         .setDescription('Display top ranked lifters'),
     async execute(interaction: ChatInputCommandInteraction) {
+        const startedAt = Date.now();
+        const logContext = interactionLocation(interaction);
+
         try {
             await interaction.deferReply();
 
@@ -24,6 +32,17 @@ module.exports = {
 
             if (!allTopLifters || allTopLifters.length === 0) {
                 await interaction.editReply('No data found for top lifters.');
+                logger.info(
+                    {
+                        event: 'command.completed',
+                        commandName: 'top',
+                        outcome: 'not_found',
+                        resultCount: 0,
+                        ...logContext,
+                        duration_ms: elapsedMs(startedAt),
+                    },
+                    'command completed',
+                );
                 return;
             }
 
@@ -115,27 +134,64 @@ module.exports = {
                     await i.update({ embeds: [embed], components: [buttons] });
                 } catch (error) {
                     logger.error(
-                        'Error handling pagination interaction:',
-                        error,
+                        {
+                            event: 'pagination.failed',
+                            commandName: 'top',
+                            action: i.customId,
+                            page: currentPage,
+                            ...logContext,
+                            duration_ms: elapsedMs(startedAt),
+                            ...errorLogFields(error),
+                        },
+                        'pagination failed',
                     );
                 }
             });
 
-            collector.on('end', () => {
+            collector.on('end', async () => {
                 try {
                     buttons.components.forEach((button) =>
                         button.setDisabled(true),
                     );
-                    interaction.editReply({ components: [buttons] });
+                    await interaction.editReply({ components: [buttons] });
                 } catch (error) {
                     logger.error(
-                        'Error disabling buttons on collector end:',
-                        error,
+                        {
+                            event: 'pagination.disable_failed',
+                            commandName: 'top',
+                            page: currentPage,
+                            ...logContext,
+                            duration_ms: elapsedMs(startedAt),
+                            ...errorLogFields(error),
+                        },
+                        'pagination disable failed',
                     );
                 }
             });
+
+            logger.info(
+                {
+                    event: 'command.completed',
+                    commandName: 'top',
+                    outcome: 'success',
+                    resultCount: allTopLifters.length,
+                    pageCount: maxPages,
+                    ...logContext,
+                    duration_ms: elapsedMs(startedAt),
+                },
+                'command completed',
+            );
         } catch (error) {
-            logger.error('Error executing /top command:', error);
+            logger.error(
+                {
+                    event: 'command.failed',
+                    commandName: 'top',
+                    ...logContext,
+                    duration_ms: elapsedMs(startedAt),
+                    ...errorLogFields(error),
+                },
+                'command failed',
+            );
             if (interaction.deferred || interaction.replied) {
                 await interaction.editReply({
                     content:

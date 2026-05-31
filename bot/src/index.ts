@@ -3,19 +3,28 @@ import path from 'node:path';
 import { Client, Collection, GatewayIntentBits } from 'discord.js';
 import { startApiDataRefresh } from './data/api';
 import { deployCommands } from './deploy-commands';
+import { errorLogFields } from './logging/fields';
+import logger from './logging/logger';
 import { Command } from './types/command';
 import { config } from './utils/config';
-import logger from './utils/logger';
 import './utils/health';
 import { startHeartbeat } from './utils/heartbeat';
 
-logger.info('Bot is starting...');
+logger.info({ event: 'bot.starting' }, 'bot starting');
 if (config.ENABLE_MOCK_API || !config.API_BASE_URL) {
     logger.warn(
-        'API_BASE_URL is not configured or mock API is enabled; using mock data for OPL commands.',
+        {
+            event: 'api_data.mock_enabled',
+            enableMockApi: config.ENABLE_MOCK_API,
+            hasApiBaseUrl: Boolean(config.API_BASE_URL),
+        },
+        'API_BASE_URL is not configured or mock API is enabled; using mock data for OPL commands',
     );
 } else {
-    logger.info('Retrieving API data from: ' + config.API_BASE_URL);
+    logger.info(
+        { event: 'api_data.enabled' },
+        'retrieving API data for OPL commands',
+    );
 }
 
 async function initializeBot() {
@@ -26,7 +35,8 @@ async function initializeBot() {
 
     if (!config.DISCORD_TOKEN) {
         logger.warn(
-            'DISCORD_TOKEN is not configured; skipping Discord gateway startup.',
+            { event: 'discord_gateway.unconfigured' },
+            'DISCORD_TOKEN is not configured; skipping Discord gateway startup',
         );
         return;
     }
@@ -53,7 +63,11 @@ async function initializeBot() {
                 client.commands.set(command.data.name, command);
             } else {
                 logger.warn(
-                    `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`,
+                    {
+                        event: 'bot.invalid_command_file',
+                        filePath,
+                    },
+                    'command file missing required exports',
                 );
             }
         }
@@ -78,5 +92,11 @@ async function initializeBot() {
 }
 
 void initializeBot().catch((error) => {
-    logger.error('Error during bot startup:', error);
+    logger.error(
+        {
+            event: 'bot.startup_failed',
+            ...errorLogFields(error),
+        },
+        'bot startup failed',
+    );
 });

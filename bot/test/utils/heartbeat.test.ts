@@ -1,11 +1,11 @@
 import axios from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import logger from '../../src/logging/logger';
 import { config } from '../../src/utils/config';
 import { startHeartbeat } from '../../src/utils/heartbeat';
-import logger from '../../src/utils/logger';
 
 vi.mock('axios');
-vi.mock('../../src/utils/logger', () => ({
+vi.mock('../../src/logging/logger', () => ({
     default: {
         info: vi.fn(),
         warn: vi.fn(),
@@ -37,6 +37,7 @@ describe('heartbeat', () => {
         startHeartbeat();
 
         expect(logger.warn).toHaveBeenCalledWith(
+            { event: 'heartbeat.unconfigured' },
             'BetterStack heartbeat URL not configured, skipping heartbeat',
         );
         expect(mockAxios.get).not.toHaveBeenCalled();
@@ -50,7 +51,8 @@ describe('heartbeat', () => {
         startHeartbeat();
 
         expect(logger.info).toHaveBeenCalledWith(
-            'Starting BetterStack heartbeat monitor',
+            { event: 'heartbeat.started', interval_ms: 60000 },
+            'starting BetterStack heartbeat monitor',
         );
         expect(mockAxios.get).toHaveBeenCalledWith(
             'https://heartbeat.betterstack.com/test',
@@ -84,8 +86,11 @@ describe('heartbeat', () => {
 
         await vi.waitFor(() => {
             expect(logger.error).toHaveBeenCalledWith(
-                'Failed to send heartbeat to BetterStack:',
-                error,
+                expect.objectContaining({
+                    event: 'heartbeat.failed',
+                    err: error,
+                }),
+                'failed to send heartbeat to BetterStack',
             );
         });
     });

@@ -1,6 +1,6 @@
 import express from 'express';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import logger from '../../src/utils/logger';
+import logger from '../../src/logging/logger';
 
 vi.mock('express', () => ({
     default: vi.fn(() => ({
@@ -12,7 +12,7 @@ vi.mock('express', () => ({
     })),
 }));
 
-vi.mock('../../src/utils/logger', () => ({
+vi.mock('../../src/logging/logger', () => ({
     default: {
         info: vi.fn(),
     },
@@ -58,7 +58,8 @@ describe('health', () => {
 
     it('logs startup message', () => {
         expect(logger.info).toHaveBeenCalledWith(
-            'Health check is running on port 3000',
+            { event: 'health_server.started', port: 3000 },
+            'health check server started',
         );
     });
 });
