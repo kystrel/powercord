@@ -29,21 +29,31 @@ describe('Ping command', () => {
 
     it('replies ephemerally with error when reply throws and interaction is not deferred', async () => {
         const interaction = createChatInputInteraction();
-        vi.mocked(interaction.reply).mockRejectedValueOnce(new Error('Discord error'));
+        vi.mocked(interaction.reply).mockRejectedValueOnce(
+            new Error('Discord error'),
+        );
         await execute(interaction);
 
         expect(logger.error).toHaveBeenCalledWith(
-            expect.objectContaining({ event: 'command.failed', commandName: 'ping' }),
+            expect.objectContaining({
+                event: 'command.failed',
+                commandName: 'ping',
+            }),
             'command failed',
         );
         expect(interaction.reply).toHaveBeenLastCalledWith(
-            expect.objectContaining({ content: 'An error occurred.', ephemeral: true }),
+            expect.objectContaining({
+                content: 'An error occurred.',
+                ephemeral: true,
+            }),
         );
     });
 
     it('edits reply with error when reply throws and interaction is deferred', async () => {
         const interaction = createChatInputInteraction({ deferred: true });
-        vi.mocked(interaction.reply).mockRejectedValueOnce(new Error('Discord error'));
+        vi.mocked(interaction.reply).mockRejectedValueOnce(
+            new Error('Discord error'),
+        );
         await execute(interaction);
 
         expect(interaction.editReply).toHaveBeenCalledWith(

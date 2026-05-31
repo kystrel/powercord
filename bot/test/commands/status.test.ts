@@ -73,25 +73,41 @@ describe('Status command', () => {
 
     it('replies ephemerally with error when reply throws and interaction is not deferred', async () => {
         const interaction = makeInteraction();
-        vi.mocked(interaction.reply).mockRejectedValueOnce(new Error('Discord error'));
+        vi.mocked(interaction.reply).mockRejectedValueOnce(
+            new Error('Discord error'),
+        );
         await execute(interaction as any);
 
         expect(logger.error).toHaveBeenCalledWith(
-            expect.objectContaining({ event: 'command.failed', commandName: 'status' }),
+            expect.objectContaining({
+                event: 'command.failed',
+                commandName: 'status',
+            }),
             'command failed',
         );
         expect(interaction.reply).toHaveBeenLastCalledWith(
-            expect.objectContaining({ content: 'An error occurred while fetching the status.', ephemeral: true }),
+            expect.objectContaining({
+                content: 'An error occurred while fetching the status.',
+                ephemeral: true,
+            }),
         );
     });
 
     it('edits reply with error when interaction is deferred', async () => {
-        const interaction = { ...makeInteraction(), deferred: true, replied: false };
-        vi.mocked(interaction.reply).mockRejectedValueOnce(new Error('Discord error'));
+        const interaction = {
+            ...makeInteraction(),
+            deferred: true,
+            replied: false,
+        };
+        vi.mocked(interaction.reply).mockRejectedValueOnce(
+            new Error('Discord error'),
+        );
         await execute(interaction as any);
 
         expect(interaction.editReply).toHaveBeenCalledWith(
-            expect.objectContaining({ content: 'An error occurred while fetching the status.' }),
+            expect.objectContaining({
+                content: 'An error occurred while fetching the status.',
+            }),
         );
     });
 });

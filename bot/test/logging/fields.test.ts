@@ -8,11 +8,14 @@ describe('errorLogFields', () => {
     });
 
     it('returns structured fields for an Axios-like error', () => {
-        const error = Object.assign(new Error('Request failed with status 503'), {
-            isAxiosError: true,
-            code: 'ECONNREFUSED',
-            response: { status: 503 },
-        });
+        const error = Object.assign(
+            new Error('Request failed with status 503'),
+            {
+                isAxiosError: true,
+                code: 'ECONNREFUSED',
+                response: { status: 503 },
+            },
+        );
         expect(errorLogFields(error)).toEqual({
             errorType: 'AxiosError',
             errorMessage: 'Request failed with status 503',

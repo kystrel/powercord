@@ -59,10 +59,15 @@ describe('deployCommands', () => {
     it('registers commands and logs success when credentials are provided', async () => {
         mockPut.mockResolvedValue([{ name: 'ping' }, { name: 'top' }]);
 
-        await deployCommands({ clientId: 'client-123', discordToken: 'token-abc' });
+        await deployCommands({
+            clientId: 'client-123',
+            discordToken: 'token-abc',
+        });
 
         expect(logger.info).toHaveBeenCalledWith(
-            expect.objectContaining({ event: 'discord_commands.refresh_started' }),
+            expect.objectContaining({
+                event: 'discord_commands.refresh_started',
+            }),
             'started refreshing application commands',
         );
         expect(logger.info).toHaveBeenCalledWith(
@@ -77,7 +82,10 @@ describe('deployCommands', () => {
     it('logs error when the REST call fails', async () => {
         mockPut.mockRejectedValue(new Error('Discord API error'));
 
-        await deployCommands({ clientId: 'client-123', discordToken: 'token-abc' });
+        await deployCommands({
+            clientId: 'client-123',
+            discordToken: 'token-abc',
+        });
 
         expect(logger.error).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -87,5 +95,4 @@ describe('deployCommands', () => {
             'failed to refresh application commands',
         );
     });
-
 });
