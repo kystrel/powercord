@@ -75,6 +75,7 @@ const mockMeet: Meet = {
     federation: 'USAPL',
     date: '2025-07-30',
     year: '2025',
+    url: 'https://www.openpowerlifting.org/m/usapl/USA-2025-07-30-mock-meet',
     country: 'USA',
     state: null,
     town: null,

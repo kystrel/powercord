@@ -42,6 +42,7 @@ export interface Meet {
     federation: string;
     date: string;
     year: string;
+    url: string | null;
     country: string;
     state: string | null;
     town: string | null;

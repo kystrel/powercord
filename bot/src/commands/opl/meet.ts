@@ -17,8 +17,44 @@ import {
 import logger from '../../logging/logger';
 import { Meet } from '../../types/types';
 
+const OPL_MEET_PATH_PATTERN =
+    /^[A-Za-z0-9][A-Za-z0-9._~-]*(\/[A-Za-z0-9][A-Za-z0-9._~-]*)+$/;
+
 async function fetchMeet(name: string): Promise<Meet | undefined> {
     return api.getMeet(name);
+}
+
+function getOpenPowerliftingMeetUrl(url: string | null | undefined) {
+    if (!url) return undefined;
+
+    try {
+        const parsed = new URL(url);
+        const pathSegments = parsed.pathname.split('/').filter(Boolean);
+        if (
+            parsed.protocol !== 'https:' ||
+            parsed.hostname !== 'www.openpowerlifting.org' ||
+            parsed.port ||
+            parsed.search ||
+            parsed.hash ||
+            pathSegments[0] !== 'm' ||
+            !OPL_MEET_PATH_PATTERN.test(pathSegments.slice(1).join('/'))
+        ) {
+            return undefined;
+        }
+
+        return parsed.toString();
+    } catch {
+        return undefined;
+    }
+}
+
+function escapeMarkdownText(value: string) {
+    return value.replace(/([\\`*_{}\[\]()#+\-.!|>~])/g, '\\$1');
+}
+
+function formatMeetName(name: string, url: string | undefined) {
+    const escapedName = escapeMarkdownText(name);
+    return url ? `[**${escapedName}**](${url})` : `**${escapedName}**`;
 }
 
 function compareDots(a: Meet['entries'][0], b: Meet['entries'][0]): number {
@@ -84,12 +120,17 @@ module.exports = {
             }
 
             const entries = meet.entries.sort(compareDots);
+            const meetUrl = getOpenPowerliftingMeetUrl(meet.url);
+            const meetName = formatMeetName(meet.name, meetUrl);
 
             const embed = new EmbedBuilder()
                 .setColor(getEmbedColor())
                 .setTitle('🥇 Powerlifting Rankings')
-                .setDescription(`Top lifters for **${meet.name}**, page 1`)
                 .setFooter({ text: getEmbedFooter() });
+
+            if (meetUrl) {
+                embed.setURL(meetUrl);
+            }
 
             const pageSize = 5;
             const maxPages = Math.ceil(entries.length / pageSize);
@@ -117,7 +158,7 @@ module.exports = {
                 ]);
                 embed.setFields(fields);
                 embed.setDescription(
-                    `Top lifters for **${meet.name}**, page ${page}`,
+                    `Top lifters for ${meetName}, page ${page}`,
                 );
             };
 

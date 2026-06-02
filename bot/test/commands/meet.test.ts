@@ -28,6 +28,11 @@ vi.mock('../../src/data/api', () => ({
     },
 }));
 
+const mockSinglePageMeetUrl =
+    'https://www.openpowerlifting.org/m/ipf/GRC-2025-06-15-labors-of-strength';
+const mockMultiPageMeetUrl =
+    'https://www.openpowerlifting.org/m/ipf/GRC-2025-06-15-multi-page-meet';
+
 const makeEntry = (name: string, dots: number) => ({
     place: 1,
     name,
@@ -48,6 +53,7 @@ const mockSinglePageMeet = {
     federation: 'IPF',
     date: '2025-06-15',
     year: '2025',
+    url: mockSinglePageMeetUrl,
     country: 'Greece',
     state: null,
     town: null,
@@ -59,6 +65,7 @@ const mockMultiPageMeet = {
     federation: 'IPF',
     date: '2025-06-15',
     year: '2025',
+    url: mockMultiPageMeetUrl,
     country: 'Greece',
     state: null,
     town: null,
@@ -97,13 +104,70 @@ describe('Meet command', () => {
                     expect.objectContaining({
                         title: '🥇 Powerlifting Rankings',
                         description: expect.stringContaining(
-                            'Top lifters for **Labors of Strength**',
+                            `Top lifters for [**Labors of Strength**](${mockSinglePageMeetUrl})`,
                         ),
+                        url: mockSinglePageMeetUrl,
                         fields: expect.any(Array),
                     }),
                 ],
             }),
         );
+    });
+
+    it('does not link the meet name when url is missing', async () => {
+        const meet = { ...mockSinglePageMeet } as any;
+        delete meet.url;
+        mockGetMeet.mockResolvedValue(meet);
+        const interaction = createChatInputInteraction({
+            name: 'Labors of Strength',
+        });
+
+        await execute(interaction);
+
+        const { embeds } = vi.mocked(interaction.editReply).mock
+            .calls[0][0] as any;
+        expect(embeds[0].description).toContain(
+            'Top lifters for **Labors of Strength**',
+        );
+        expect(embeds[0].url).toBeUndefined();
+    });
+
+    it('does not link the meet name when url is null', async () => {
+        mockGetMeet.mockResolvedValue({
+            ...mockSinglePageMeet,
+            url: null,
+        });
+        const interaction = createChatInputInteraction({
+            name: 'Labors of Strength',
+        });
+
+        await execute(interaction);
+
+        const { embeds } = vi.mocked(interaction.editReply).mock
+            .calls[0][0] as any;
+        expect(embeds[0].description).toContain(
+            'Top lifters for **Labors of Strength**',
+        );
+        expect(embeds[0].url).toBeUndefined();
+    });
+
+    it('does not link the meet name when url is invalid', async () => {
+        mockGetMeet.mockResolvedValue({
+            ...mockSinglePageMeet,
+            url: 'https://www.openpowerlifting.org/u/not-a-meet',
+        });
+        const interaction = createChatInputInteraction({
+            name: 'Labors of Strength',
+        });
+
+        await execute(interaction);
+
+        const { embeds } = vi.mocked(interaction.editReply).mock
+            .calls[0][0] as any;
+        expect(embeds[0].description).toContain(
+            'Top lifters for **Labors of Strength**',
+        );
+        expect(embeds[0].url).toBeUndefined();
     });
 
     it('replies with error when no name is provided', async () => {
@@ -197,6 +261,10 @@ describe('Meet command', () => {
         const { embeds } = vi.mocked(buttonInteraction.update).mock
             .calls[0][0] as any;
         expect(embeds[0].description).toContain('page 2');
+        expect(embeds[0].description).toContain(
+            `[**Multi Page Meet**](${mockMultiPageMeetUrl})`,
+        );
+        expect(embeds[0].url).toBe(mockMultiPageMeetUrl);
     });
 
     it('replies ephemerally when API throws and interaction is not deferred', async () => {
