@@ -21,7 +21,7 @@
     "@nuxt/image": "2.0.0",
     "@nuxt/ui": "4.6.1",
     "@nuxtjs/tailwindcss": "7.0.0-beta.1",
-    "nuxt": "4.4.6",
+    "nuxt": "4.4.7",
     "tailwindcss": "4.2.2"
   },
   "devDependencies": {
