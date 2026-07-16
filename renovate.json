@@ -1,10 +1,6 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "extends": [
-        "config:recommended",
-        "helpers:pinGitHubActionDigests",
-        ":separateMultipleMajorReleases"
-    ],
+    "extends": ["config:best-practices", ":separateMultipleMajorReleases"],
     "baseBranchPatterns": ["master"],
     "dependencyDashboard": true,
     "configMigration": true,
@@ -13,6 +9,11 @@
     "prHourlyLimit": 0,
     "prConcurrentLimit": 3,
     "platformAutomerge": false,
+    "vulnerabilityAlerts": {
+        "enabled": true,
+        "groupName": "security updates",
+        "vulnerabilityFixStrategy": "lowest"
+    },
     "lockFileMaintenance": {
         "enabled": true,
         "automerge": false,
@@ -44,14 +45,23 @@
         {
             "matchUpdateTypes": ["patch"],
             "groupName": "patch updates",
-            "minimumReleaseAge": "5 days",
+            "minimumReleaseAge": "14 days",
             "minimumReleaseAgeBehaviour": "timestamp-required",
             "internalChecksFilter": "strict",
             "automerge": true
         },
         {
+            "description": "Pin new GitHub Actions immediately",
             "matchManagers": ["github-actions"],
-            "matchUpdateTypes": ["pinDigest", "digest"],
+            "matchUpdateTypes": ["pinDigest"],
+            "groupName": "Pin GitHub Actions digests",
+            "schedule": ["at any time"],
+            "automerge": true
+        },
+        {
+            "description": "Review GitHub Actions digest changes",
+            "matchManagers": ["github-actions"],
+            "matchUpdateTypes": ["digest"],
             "groupName": "GitHub Actions digests",
             "dependencyDashboardApproval": true
         },
