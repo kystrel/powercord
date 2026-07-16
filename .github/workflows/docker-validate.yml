@@ -106,6 +106,12 @@ jobs:
                     docker logs --tail 200 bot-validate || true
                     exit 1
                   fi
+                  readiness_status="$(curl -sS -o /dev/null -w '%{http_code}' http://localhost:3000/health)"
+                  if [[ "${readiness_status}" != "503" ]]; then
+                    echo "Expected readiness endpoint to return 503, got ${readiness_status}" >&2
+                    docker logs --tail 200 bot-validate || true
+                    exit 1
+                  fi
                   docker stop bot-validate
 
             - name: Show logs on fail
