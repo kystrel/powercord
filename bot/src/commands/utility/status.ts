@@ -53,7 +53,6 @@ module.exports = {
             const minutes = Math.floor((uptimeInSeconds % 3600) / 60);
 
             const client = interaction.client;
-            await client.guilds.fetch();
             const serverCount = client.guilds.cache.size;
             const userCount = client.users.cache.size;
             const autocompleteStatus = autocompleteCache.getStatus();
@@ -66,7 +65,7 @@ module.exports = {
                 .setDescription(
                     `Latency is **${latency}**ms\n\n` +
                         `Uptime: **${hours} hours** and **${minutes} minutes**\n` +
-                        `I am currently in **${serverCount} servers** with **${userCount} cached users**\n\n` +
+                        `I currently have **${serverCount} cached servers** and **${userCount} cached users**\n\n` +
                         `${formatAutocompleteStatus(autocompleteStatus)}\n\n` +
                         `Credit to [OpenPowerlifting](https://www.openpowerlifting.org/) for data used`,
                 );
@@ -78,7 +77,7 @@ module.exports = {
                     commandName: 'status',
                     outcome: 'success',
                     latency_ms: latency,
-                    serverCount,
+                    cachedServerCount: serverCount,
                     cachedUserCount: userCount,
                     uptimeSeconds: Math.floor(uptimeInSeconds),
                     autocompleteSource: autocompleteStatus.source,

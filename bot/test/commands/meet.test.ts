@@ -33,7 +33,7 @@ const mockSinglePageMeetUrl =
 const mockMultiPageMeetUrl =
     'https://www.openpowerlifting.org/m/ipf/GRC-2025-06-15-multi-page-meet';
 
-const makeEntry = (name: string, dots: number) => ({
+const makeEntry = (name: string, dots: number | null) => ({
     place: 1,
     name,
     sex: 'M',
@@ -112,6 +112,47 @@ describe('Meet command', () => {
                 ],
             }),
         );
+    });
+
+    it('sorts entries without changing the API response', async () => {
+        const meet = {
+            ...mockSinglePageMeet,
+            entries: [makeEntry('Lower', 400), makeEntry('Higher', 500)],
+        };
+        mockGetMeet.mockResolvedValue(meet);
+        const interaction = createChatInputInteraction({
+            name: 'Labors of Strength',
+        });
+
+        await execute(interaction);
+
+        expect(meet.entries.map((entry) => entry.name)).toEqual([
+            'Lower',
+            'Higher',
+        ]);
+        const { embeds } = vi.mocked(interaction.editReply).mock
+            .calls[0][0] as any;
+        expect(embeds[0].fields[0].name).toContain('Higher');
+        expect(embeds[0].fields[3].name).toContain('Lower');
+    });
+
+    it('sorts zero DOTS ahead of missing DOTS', async () => {
+        mockGetMeet.mockResolvedValue({
+            ...mockSinglePageMeet,
+            entries: [makeEntry('Missing', null), makeEntry('Zero', 0)],
+        });
+        const interaction = createChatInputInteraction({
+            name: 'Labors of Strength',
+        });
+
+        await execute(interaction);
+
+        const { embeds } = vi.mocked(interaction.editReply).mock
+            .calls[0][0] as any;
+        expect(embeds[0].fields[0].name).toContain('Zero');
+        expect(embeds[0].fields[1].value).toContain('Dots: 0.00');
+        expect(embeds[0].fields[3].name).toContain('Missing');
+        expect(embeds[0].fields[4].value).toContain('Dots: —');
     });
 
     it('does not link the meet name when url is missing', async () => {

@@ -91,6 +91,33 @@ describe('Lifter command', () => {
             );
         });
 
+        it.each([
+            [1, '1st'],
+            [2, '2nd'],
+            [3, '3rd'],
+            [4, '4th'],
+            [11, '11th'],
+            [12, '12th'],
+            [13, '13th'],
+            [21, '21st'],
+            [22, '22nd'],
+            [23, '23rd'],
+        ])('formats a placement of %i as %s', async (place, placement) => {
+            mockGetLifter.mockResolvedValue({
+                ...mockLifter,
+                meets: [{ ...mockLifter.meets[0], place }],
+            });
+            const interaction = createChatInputInteraction({
+                name: 'Heracles',
+            });
+
+            await execute(interaction);
+
+            const { embeds } = vi.mocked(interaction.editReply).mock
+                .calls[0][0] as any;
+            expect(embeds[0].fields[0].value).toContain(`${placement} Place`);
+        });
+
         it('replies with error when no name is provided', async () => {
             const interaction = createChatInputInteraction({ name: null });
             await execute(interaction);
