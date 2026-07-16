@@ -1,10 +1,11 @@
-import axios from 'axios';
 import { errorLogFields } from '../logging/fields';
 import logger from '../logging/logger';
 import { isBotReady } from './botState';
 import { config } from './config';
+import { discardResponseBody, fetchOk } from './http';
 
 const HEARTBEAT_INTERVAL = 60000; // 60 seconds
+const HEARTBEAT_TIMEOUT_MS = 5000;
 
 export function startHeartbeat() {
     if (!config.BETTERSTACK_HEARTBEAT_URL) {
@@ -36,7 +37,10 @@ async function sendHeartbeat() {
     }
 
     try {
-        await axios.get(config.BETTERSTACK_HEARTBEAT_URL!, { timeout: 5000 });
+        const response = await fetchOk(config.BETTERSTACK_HEARTBEAT_URL!, {
+            signal: AbortSignal.timeout(HEARTBEAT_TIMEOUT_MS),
+        });
+        await discardResponseBody(response);
     } catch (error) {
         logger.error(
             {

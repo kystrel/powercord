@@ -1,14 +1,10 @@
-import axios from 'axios';
 import { elapsedMs, errorLogFields } from '../logging/fields';
 import logger from '../logging/logger';
 import type { Lifter, Meet, TopLifter } from '../types/types';
 import { config } from '../utils/config';
+import { fetchOk } from '../utils/http';
 
-const api = axios.create({
-    baseURL: config.API_BASE_URL,
-    timeout: 20000,
-    headers: { 'Content-Type': 'application/json' },
-});
+const API_REQUEST_TIMEOUT_MS = 20000;
 
 type ApiLogFields = Record<string, unknown>;
 
@@ -28,8 +24,18 @@ async function getFromApi<T>({
     const startedAt = Date.now();
 
     try {
-        const response = await api.get(route, { params });
-        const data = response.data as T;
+        const baseUrl = config.API_BASE_URL!.replace(/\/+$/, '');
+        const relativeRoute = route.replace(/^\/+/, '');
+        const url = new URL(`${baseUrl}/${relativeRoute}`);
+        for (const [key, value] of Object.entries(params)) {
+            url.searchParams.set(key, String(value));
+        }
+
+        const response = await fetchOk(url, {
+            headers: { Accept: 'application/json' },
+            signal: AbortSignal.timeout(API_REQUEST_TIMEOUT_MS),
+        });
+        const data = (await response.json()) as T;
 
         logger.info(
             {

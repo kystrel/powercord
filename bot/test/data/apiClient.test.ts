@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
     getLifter,
     getLifterAutocomplete,
@@ -8,6 +8,7 @@ import {
 } from '../../src/data/apiClient';
 import logger from '../../src/logging/logger';
 import { Lifter, Meet, TopLifter } from '../../src/types/types';
+import { config } from '../../src/utils/config';
 
 vi.mock('../../src/logging/logger', () => ({
     default: {
@@ -24,16 +25,16 @@ vi.mock('../../src/utils/config', () => ({
     },
 }));
 
-const mockGet = vi.hoisted(() => vi.fn());
+const mockFetch = vi.hoisted(() => vi.fn());
 
-vi.mock('axios', () => ({
-    default: {
-        create: vi.fn(() => ({
-            get: mockGet,
-            defaults: { baseURL: 'http://localhost:8080' },
-        })),
-    },
-}));
+vi.stubGlobal('fetch', mockFetch);
+
+function jsonResponse(data: unknown, status = 200) {
+    return new Response(JSON.stringify(data), {
+        status,
+        headers: { 'Content-Type': 'application/json' },
+    });
+}
 
 const mockLifter: Lifter = {
     name: 'Jane Doe',
@@ -122,20 +123,38 @@ const mockTopLifters: TopLifter[] = [
 
 describe('apiClient', () => {
     beforeEach(() => {
-        mockGet.mockReset();
-        vi.mocked(logger.error).mockClear();
+        (config as any).API_BASE_URL = 'http://localhost:8080';
+        mockFetch.mockReset();
+        vi.clearAllMocks();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('getLifter returns lifter data from the API', async () => {
-        mockGet.mockResolvedValueOnce({ data: mockLifter });
+        mockFetch.mockResolvedValueOnce(jsonResponse(mockLifter));
         const result = await getLifter('Jane Doe');
 
         expect(result).toEqual(mockLifter);
         expect(logger.error).not.toHaveBeenCalled();
+        expect(logger.info).toHaveBeenCalledWith(
+            expect.objectContaining({
+                event: 'api_client.request_completed',
+                route: '/api/lifters',
+                method: 'GET',
+                query: 'Jane Doe',
+                statusCode: 200,
+                found: true,
+                meetCount: 1,
+                duration_ms: expect.any(Number),
+            }),
+            'api client request completed',
+        );
     });
 
     it('getMeet returns meet data from the API', async () => {
-        mockGet.mockResolvedValueOnce({ data: mockMeet });
+        mockFetch.mockResolvedValueOnce(jsonResponse(mockMeet));
         const result = await getMeet('Mock Meet');
 
         expect(result).toEqual(mockMeet);
@@ -143,7 +162,7 @@ describe('apiClient', () => {
     });
 
     it('getTopLifters returns top lifter data from the API', async () => {
-        mockGet.mockResolvedValueOnce({ data: mockTopLifters });
+        mockFetch.mockResolvedValueOnce(jsonResponse(mockTopLifters));
         const result = await getTopLifters(1);
 
         expect(result).toEqual(mockTopLifters);
@@ -151,7 +170,7 @@ describe('apiClient', () => {
     });
 
     it('getLifter returns undefined and logs error on network failure', async () => {
-        mockGet.mockRejectedValueOnce(new Error('Network error'));
+        mockFetch.mockRejectedValueOnce(new Error('Network error'));
         const result = await getLifter('Jane Doe');
 
         expect(result).toBeUndefined();
@@ -161,13 +180,14 @@ describe('apiClient', () => {
                 route: '/api/lifters',
                 query: 'Jane Doe',
                 err: expect.any(Error),
+                errorType: 'Error',
             }),
             'api client request failed',
         );
     });
 
     it('getMeet returns undefined and logs error on network failure', async () => {
-        mockGet.mockRejectedValueOnce(new Error('Network error'));
+        mockFetch.mockRejectedValueOnce(new Error('Network error'));
         const result = await getMeet('Mock Meet');
 
         expect(result).toBeUndefined();
@@ -183,7 +203,7 @@ describe('apiClient', () => {
     });
 
     it('getTopLifters returns undefined and logs error on network failure', async () => {
-        mockGet.mockRejectedValueOnce(new Error('Network error'));
+        mockFetch.mockRejectedValueOnce(new Error('Network error'));
         const result = await getTopLifters(1);
 
         expect(result).toBeUndefined();
@@ -199,7 +219,9 @@ describe('apiClient', () => {
     });
 
     it('getLifterAutocomplete returns name suggestions from the API', async () => {
-        mockGet.mockResolvedValueOnce({ data: ['Jane Doe', 'Jane Smith'] });
+        mockFetch.mockResolvedValueOnce(
+            jsonResponse(['Jane Doe', 'Jane Smith']),
+        );
         const result = await getLifterAutocomplete('Jane');
 
         expect(result).toEqual(['Jane Doe', 'Jane Smith']);
@@ -207,7 +229,7 @@ describe('apiClient', () => {
     });
 
     it('getLifterAutocomplete returns undefined and logs error on network failure', async () => {
-        mockGet.mockRejectedValueOnce(new Error('Network error'));
+        mockFetch.mockRejectedValueOnce(new Error('Network error'));
         const result = await getLifterAutocomplete('Jane');
 
         expect(result).toBeUndefined();
@@ -223,9 +245,9 @@ describe('apiClient', () => {
     });
 
     it('getMeetAutocomplete returns meet name suggestions from the API', async () => {
-        mockGet.mockResolvedValueOnce({
-            data: ['Mock Meet', 'Mock Meet 2'],
-        });
+        mockFetch.mockResolvedValueOnce(
+            jsonResponse(['Mock Meet', 'Mock Meet 2']),
+        );
         const result = await getMeetAutocomplete('Mock');
 
         expect(result).toEqual(['Mock Meet', 'Mock Meet 2']);
@@ -233,7 +255,7 @@ describe('apiClient', () => {
     });
 
     it('getMeetAutocomplete returns undefined and logs error on network failure', async () => {
-        mockGet.mockRejectedValueOnce(new Error('Network error'));
+        mockFetch.mockRejectedValueOnce(new Error('Network error'));
         const result = await getMeetAutocomplete('Mock');
 
         expect(result).toBeUndefined();
@@ -243,6 +265,75 @@ describe('apiClient', () => {
                 route: '/api/meets/autocomplete',
                 query: 'Mock',
                 err: expect.any(Error),
+            }),
+            'api client request failed',
+        );
+    });
+
+    it('encodes query parameters and applies a request timeout', async () => {
+        const timeout = vi.spyOn(AbortSignal, 'timeout');
+        mockFetch.mockResolvedValueOnce(jsonResponse(['Jane Doe']));
+
+        await getLifterAutocomplete('Jane & John', 25);
+
+        expect(mockFetch).toHaveBeenCalledWith(
+            new URL(
+                'http://localhost:8080/api/lifters/autocomplete?query=Jane+%26+John&limit=25',
+            ),
+            {
+                headers: { Accept: 'application/json' },
+                signal: expect.any(AbortSignal),
+            },
+        );
+        expect(timeout).toHaveBeenCalledWith(20000);
+    });
+
+    it('preserves a path prefix in the API base URL', async () => {
+        (config as any).API_BASE_URL = 'http://localhost:8080/v2/';
+        mockFetch.mockResolvedValueOnce(jsonResponse(mockLifter));
+
+        await getLifter('Jane Doe');
+
+        const [url] = mockFetch.mock.calls[0];
+        expect(url).toEqual(
+            new URL('http://localhost:8080/v2/api/lifters?name=Jane+Doe'),
+        );
+    });
+
+    it('treats non-success responses as request failures', async () => {
+        mockFetch.mockResolvedValueOnce(
+            new Response('Service unavailable', { status: 503 }),
+        );
+
+        const result = await getLifter('Jane Doe');
+
+        expect(result).toBeUndefined();
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                event: 'api_client.request_failed',
+                route: '/api/lifters',
+                errorType: 'HttpResponseError',
+                statusCode: 503,
+            }),
+            'api client request failed',
+        );
+    });
+
+    it('logs timeout failures with their error type', async () => {
+        mockFetch.mockRejectedValueOnce(
+            new DOMException(
+                'The operation was aborted due to timeout',
+                'TimeoutError',
+            ),
+        );
+
+        const result = await getMeet('Mock Meet');
+
+        expect(result).toBeUndefined();
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                event: 'api_client.request_failed',
+                errorType: 'TimeoutError',
             }),
             'api client request failed',
         );

@@ -9,7 +9,6 @@ const redactPaths = [
     'request.headers',
     'req.headers',
     'config',
-    'axiosConfig',
     'response.headers',
     'response.body',
     'response.data',
