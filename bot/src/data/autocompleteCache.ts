@@ -25,6 +25,21 @@ type AutocompleteSnapshot = {
     meetNames: string[];
 };
 
+export type AutocompleteCacheStatus =
+    | {
+          source: 'local';
+          configured: true;
+          revision: string;
+          updatedAt: string;
+          loadedAt: string;
+          lifterCount: number;
+          meetCount: number;
+      }
+    | {
+          source: 'http';
+          configured: boolean;
+      };
+
 type CacheLogger = {
     debug(fields: Record<string, unknown>, message: string): void;
     info(fields: Record<string, unknown>, message: string): void;
@@ -173,6 +188,26 @@ export class AutocompleteCache {
 
     getSnapshot(): AutocompleteSnapshot | undefined {
         return this.snapshot;
+    }
+
+    getStatus(): AutocompleteCacheStatus {
+        const snapshot = this.snapshot;
+        if (!snapshot) {
+            return {
+                source: 'http',
+                configured: Boolean(this.options.bucket),
+            };
+        }
+
+        return {
+            source: 'local',
+            configured: true,
+            revision: snapshot.revision,
+            updatedAt: snapshot.updatedAt,
+            loadedAt: snapshot.loadedAt,
+            lifterCount: snapshot.lifterNames.length,
+            meetCount: snapshot.meetNames.length,
+        };
     }
 
     private async getAutocomplete(
