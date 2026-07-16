@@ -19,6 +19,26 @@ async function fetchLifter(name: string): Promise<Lifter | undefined> {
     return api.getLifter(name);
 }
 
+function formatPlacement(place: number): string {
+    const absolutePlace = Math.abs(place);
+    const lastTwoDigits = absolutePlace % 100;
+
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 13) {
+        return `${place}th`;
+    }
+
+    const suffix =
+        absolutePlace % 10 === 1
+            ? 'st'
+            : absolutePlace % 10 === 2
+              ? 'nd'
+              : absolutePlace % 10 === 3
+                ? 'rd'
+                : 'th';
+
+    return `${place}${suffix}`;
+}
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('lifter')
@@ -104,7 +124,7 @@ module.exports = {
                 {
                     name: `\`${index + 1}.\` ${meet.federation} ${meet.name}`,
                     value: `
-                    ${meet.place}st Place${meet.state ? `, ${meet.state}` : ''}
+                    ${formatPlacement(meet.place)} Place${meet.state ? `, ${meet.state}` : ''}
                     Date: ${meet.date}
                     Age: ${meet.age ?? '—'}
                     Equip: ${meet.equipment}

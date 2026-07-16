@@ -63,9 +63,9 @@ function formatMeetName(
 }
 
 function compareDots(a: Meet['entries'][0], b: Meet['entries'][0]): number {
-    if (!a.dots && !b.dots) return 0;
-    if (!a.dots) return 1;
-    if (!b.dots) return -1;
+    if (a.dots == null && b.dots == null) return 0;
+    if (a.dots == null) return 1;
+    if (b.dots == null) return -1;
     return b.dots - a.dots;
 }
 
@@ -124,7 +124,7 @@ module.exports = {
                 return;
             }
 
-            const entries = meet.entries.sort(compareDots);
+            const entries = meet.entries.toSorted(compareDots);
             const meetUrl = getOpenPowerliftingMeetUrl(meet.url);
             const meetName = formatMeetName(
                 meet.year,

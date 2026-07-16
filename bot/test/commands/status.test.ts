@@ -64,16 +64,23 @@ describe('Status command', () => {
         );
     });
 
-    it('embed description contains latency, server count, and cached user count', async () => {
+    it('labels cached server and user counts in the embed and logs', async () => {
         const interaction = makeInteraction(75);
         await execute(interaction as any);
 
         const { embeds } = (interaction.editReply as any).mock.calls[0][0];
         const embed = embeds[0];
         expect(embed.description).toContain('ms');
-        expect(embed.description).toContain('5 servers');
+        expect(embed.description).toContain('5 cached servers');
         expect(embed.description).toContain('42 cached users');
         expect(embed.description).toContain('HTTP fallback');
+        expect(logger.info).toHaveBeenCalledWith(
+            expect.objectContaining({
+                cachedServerCount: 5,
+                cachedUserCount: 42,
+            }),
+            'command completed',
+        );
     });
 
     it('shows local autocomplete snapshot metadata and counts', async () => {
@@ -118,11 +125,11 @@ describe('Status command', () => {
         expect(embeds[0].description).not.toContain('<t:NaN:R>');
     });
 
-    it('fetches guilds before building the embed', async () => {
+    it('uses the guild cache without fetching every guild', async () => {
         const interaction = makeInteraction();
         await execute(interaction as any);
 
-        expect(interaction.client.guilds.fetch).toHaveBeenCalled();
+        expect(interaction.client.guilds.fetch).not.toHaveBeenCalled();
     });
 
     it('replies ephemerally with error when reply throws and interaction is not deferred', async () => {
