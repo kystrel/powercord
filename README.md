@@ -49,6 +49,11 @@ blobs from S3 into memory and answers Discord autocomplete locally. If the cache
 is not ready or a refresh fails before any cache is loaded, the bot falls back to
 the public HTTP autocomplete API configured by `API_BASE_URL`.
 
+The bot exposes `GET /live` for process liveness and `GET /health` for readiness.
+Readiness returns `200` only while the Discord client is connected and ready;
+otherwise it returns `503`. Better Stack heartbeats follow the same readiness
+signal so startup or gateway failures are not reported as healthy.
+
 ### Project
 
 In the root directory of the project enter the following commands. This will install all dependencies and begin the dev instance.
