@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1053.0",
-    "axios": "1.16.1",
     "discord.js": "14.26.4",
     "dotenv": "17.4.2",
     "express": "5.2.1",

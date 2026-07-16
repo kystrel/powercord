@@ -3,21 +3,21 @@ type InteractionLocation = {
     channelId: string | null;
 };
 
-type AxiosErrorLike = Error & {
-    isAxiosError?: boolean;
-    code?: string;
-    status?: number;
-    response?: {
-        status?: number;
-    };
+type ErrorWithContext = Error & {
+    code?: unknown;
+    statusCode?: unknown;
+    cause?: unknown;
 };
 
-function isAxiosErrorLike(error: unknown): error is AxiosErrorLike {
-    return Boolean(
-        error &&
-        typeof error === 'object' &&
-        (error as Partial<AxiosErrorLike>).isAxiosError,
-    );
+function getErrorCode(error: ErrorWithContext): string | undefined {
+    if (typeof error.code === 'string') return error.code;
+
+    if (error.cause && typeof error.cause === 'object') {
+        const causeCode = (error.cause as { code?: unknown }).code;
+        if (typeof causeCode === 'string') return causeCode;
+    }
+
+    return undefined;
 }
 
 export function interactionLocation(interaction: InteractionLocation) {
@@ -28,17 +28,18 @@ export function interactionLocation(interaction: InteractionLocation) {
 }
 
 export function errorLogFields(error: unknown): Record<string, unknown> {
-    if (isAxiosErrorLike(error)) {
-        return {
-            errorType: 'AxiosError',
-            errorMessage: error.message,
-            errorCode: error.code,
-            statusCode: error.response?.status ?? error.status,
-        };
-    }
-
     if (error instanceof Error) {
-        return { err: error };
+        const contextualError = error as ErrorWithContext;
+        return {
+            err: error,
+            errorType: error.name,
+            errorMessage: error.message,
+            errorCode: getErrorCode(contextualError),
+            statusCode:
+                typeof contextualError.statusCode === 'number'
+                    ? contextualError.statusCode
+                    : undefined,
+        };
     }
 
     return {
