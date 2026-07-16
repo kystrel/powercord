@@ -104,7 +104,7 @@ describe('Meet command', () => {
                     expect.objectContaining({
                         title: '🥇 Powerlifting Rankings',
                         description: expect.stringContaining(
-                            `Top lifters for [**Labors of Strength**](${mockSinglePageMeetUrl})`,
+                            `Top lifters for [**2025 IPF Labors of Strength**](${mockSinglePageMeetUrl})`,
                         ),
                         url: mockSinglePageMeetUrl,
                         fields: expect.any(Array),
@@ -127,7 +127,7 @@ describe('Meet command', () => {
         const { embeds } = vi.mocked(interaction.editReply).mock
             .calls[0][0] as any;
         expect(embeds[0].description).toContain(
-            'Top lifters for **Labors of Strength**',
+            'Top lifters for **2025 IPF Labors of Strength**',
         );
         expect(embeds[0].url).toBeUndefined();
     });
@@ -146,7 +146,7 @@ describe('Meet command', () => {
         const { embeds } = vi.mocked(interaction.editReply).mock
             .calls[0][0] as any;
         expect(embeds[0].description).toContain(
-            'Top lifters for **Labors of Strength**',
+            'Top lifters for **2025 IPF Labors of Strength**',
         );
         expect(embeds[0].url).toBeUndefined();
     });
@@ -165,7 +165,7 @@ describe('Meet command', () => {
         const { embeds } = vi.mocked(interaction.editReply).mock
             .calls[0][0] as any;
         expect(embeds[0].description).toContain(
-            'Top lifters for **Labors of Strength**',
+            'Top lifters for **2025 IPF Labors of Strength**',
         );
         expect(embeds[0].url).toBeUndefined();
     });
@@ -262,7 +262,7 @@ describe('Meet command', () => {
             .calls[0][0] as any;
         expect(embeds[0].description).toContain('page 2');
         expect(embeds[0].description).toContain(
-            `[**Multi Page Meet**](${mockMultiPageMeetUrl})`,
+            `[**2025 IPF Multi Page Meet**](${mockMultiPageMeetUrl})`,
         );
         expect(embeds[0].url).toBe(mockMultiPageMeetUrl);
     });

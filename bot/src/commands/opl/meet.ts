@@ -52,8 +52,13 @@ function escapeMarkdownText(value: string) {
     return value.replace(/([\\`*_{}\[\]()#+\-.!|>~])/g, '\\$1');
 }
 
-function formatMeetName(name: string, url: string | undefined) {
-    const escapedName = escapeMarkdownText(name);
+function formatMeetName(
+    year: string,
+    federation: string,
+    name: string,
+    url: string | undefined,
+) {
+    const escapedName = escapeMarkdownText(`${year} ${federation} ${name}`);
     return url ? `[**${escapedName}**](${url})` : `**${escapedName}**`;
 }
 
@@ -121,7 +126,12 @@ module.exports = {
 
             const entries = meet.entries.sort(compareDots);
             const meetUrl = getOpenPowerliftingMeetUrl(meet.url);
-            const meetName = formatMeetName(meet.name, meetUrl);
+            const meetName = formatMeetName(
+                meet.year,
+                meet.federation,
+                meet.name,
+                meetUrl,
+            );
 
             const embed = new EmbedBuilder()
                 .setColor(getEmbedColor())
