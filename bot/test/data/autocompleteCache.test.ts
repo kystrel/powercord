@@ -144,6 +144,49 @@ describe('AutocompleteCache', () => {
         );
     });
 
+    it('reports local snapshot metadata without exposing cached names', async () => {
+        const { s3 } = makeS3(
+            makeObjects(
+                'rev1',
+                ['Samantha Rice', 'A Kandasamy'],
+                ['2025 USAPL Raw Nationals'],
+            ),
+        );
+        const cache = new AutocompleteCache({
+            s3,
+            bucket: 'test-bucket',
+            refreshIntervalSeconds: 300,
+            logger: makeLogger(),
+            now: () => new Date('2026-05-24T01:00:00.000Z'),
+        });
+
+        await cache.refresh();
+
+        expect(cache.getStatus()).toEqual({
+            source: 'local',
+            configured: true,
+            revision: 'rev1',
+            updatedAt: '2026-05-24T00:00:00.000Z',
+            loadedAt: '2026-05-24T01:00:00.000Z',
+            lifterCount: 2,
+            meetCount: 1,
+        });
+    });
+
+    it('reports HTTP fallback while a local snapshot is unavailable', () => {
+        const cache = new AutocompleteCache({
+            s3: makeS3({}).s3,
+            bucket: 'test-bucket',
+            refreshIntervalSeconds: 300,
+            logger: makeLogger(),
+        });
+
+        expect(cache.getStatus()).toEqual({
+            source: 'http',
+            configured: true,
+        });
+    });
+
     it('returns an empty array for an empty query without calling fallback', async () => {
         const logger = makeLogger();
         const { s3 } = makeS3(makeObjects('rev1', ['A Kandasamy'], []));
