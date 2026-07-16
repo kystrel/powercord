@@ -65,9 +65,6 @@ importers:
       express:
         specifier: 5.2.1
         version: 5.2.1
-      match-sorter:
-        specifier: 8.3.0
-        version: 8.3.0
       pino:
         specifier: 9.14.0
         version: 9.14.0
@@ -84,6 +81,9 @@ importers:
       eslint:
         specifier: 10.4.0
         version: 10.4.0(jiti@2.7.0)
+      match-sorter:
+        specifier: 8.3.0
+        version: 8.3.0
       nodemon:
         specifier: 3.1.14
         version: 3.1.14

@@ -12,6 +12,12 @@ describe('config', () => {
         process.env = originalEnv;
     });
 
+    it('reads NODE_ENV from the environment', async () => {
+        process.env.NODE_ENV = 'production';
+        const { config } = await import('../../src/utils/config');
+        expect(config.NODE_ENV).toBe('production');
+    });
+
     it('uses AUTOCOMPLETE_REFRESH_INTERVAL_SECONDS when set to a valid positive integer', async () => {
         process.env.AUTOCOMPLETE_REFRESH_INTERVAL_SECONDS = '600';
         const { config } = await import('../../src/utils/config');

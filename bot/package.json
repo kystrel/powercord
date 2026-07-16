@@ -4,7 +4,8 @@
   "version": "0.0.1",
   "main": "src/index.ts",
   "scripts": {
-    "build": "tsc",
+    "prebuild": "node scripts/clean-build.mjs",
+    "build": "tsc -p tsconfig.build.json",
     "deploy:commands": "ts-node src/deploy-commands.ts",
     "dev": "nodemon",
     "start": "ts-node --transpile-only src/index.ts",
@@ -18,7 +19,6 @@
     "discord.js": "14.26.4",
     "dotenv": "17.4.2",
     "express": "5.2.1",
-    "match-sorter": "8.3.0",
     "pino": "9.14.0",
     "tslib": "2.8.1"
   },
@@ -26,6 +26,7 @@
     "@types/express": "5.0.6",
     "@vitest/coverage-v8": "4.1.6",
     "eslint": "10.4.0",
+    "match-sorter": "8.3.0",
     "nodemon": "3.1.14",
     "ts-node": "10.9.2",
     "typescript": "6.0.3",

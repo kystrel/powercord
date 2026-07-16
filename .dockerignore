@@ -35,3 +35,7 @@ web
 terraform
 .claude
 .github
+
+# Development-only mock data
+bot/src/data/mock
+bot/src/data/mockClient.ts

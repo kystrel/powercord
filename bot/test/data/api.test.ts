@@ -1,25 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockConfig, mockApiClient, mockMockClient } = vi.hoisted(() => ({
-    mockConfig: {
-        API_BASE_URL: undefined as string | undefined,
-        ENABLE_MOCK_API: false,
-    },
-    mockApiClient: {
-        getLifter: vi.fn(),
-        getMeet: vi.fn(),
-        getTopLifters: vi.fn(),
-        getLifterAutocomplete: vi.fn(),
-        getMeetAutocomplete: vi.fn(),
-    },
-    mockMockClient: {
-        getLifter: vi.fn(),
-        getMeet: vi.fn(),
-        getTopLifters: vi.fn(),
-        getLifterAutocomplete: vi.fn(),
-        getMeetAutocomplete: vi.fn(),
-    },
-}));
+const { mockConfig, mockApiClient, mockMockClient, mockLoadMockClient } =
+    vi.hoisted(() => ({
+        mockConfig: {
+            NODE_ENV: 'test' as string | undefined,
+            API_BASE_URL: undefined as string | undefined,
+            ENABLE_MOCK_API: false,
+        },
+        mockApiClient: {
+            getLifter: vi.fn(),
+            getMeet: vi.fn(),
+            getTopLifters: vi.fn(),
+            getLifterAutocomplete: vi.fn(),
+            getMeetAutocomplete: vi.fn(),
+        },
+        mockMockClient: {
+            getLifter: vi.fn(),
+            getMeet: vi.fn(),
+            getTopLifters: vi.fn(),
+            getLifterAutocomplete: vi.fn(),
+            getMeetAutocomplete: vi.fn(),
+        },
+        mockLoadMockClient: vi.fn(),
+    }));
 const mockAutocompleteCache = vi.hoisted(() => ({
     autocompleteCache: {
         getLifterAutocomplete: vi.fn(),
@@ -30,13 +33,19 @@ const mockAutocompleteCache = vi.hoisted(() => ({
 
 vi.mock('../../src/utils/config', () => ({ config: mockConfig }));
 vi.mock('../../src/data/apiClient', () => mockApiClient);
-vi.mock('../../src/data/mockClient', () => mockMockClient);
+vi.mock('../../src/data/mockApiLoader', () => ({
+    loadMockClient: mockLoadMockClient,
+}));
 vi.mock('../../src/data/autocompleteCache', () => mockAutocompleteCache);
 
 describe('api', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         vi.resetModules();
+        mockConfig.NODE_ENV = 'test';
+        mockConfig.API_BASE_URL = 'http://localhost:3000/api';
+        mockConfig.ENABLE_MOCK_API = false;
+        mockLoadMockClient.mockReturnValue(mockMockClient);
     });
 
     it('routes getLifter to mockClient when ENABLE_MOCK_API is true', async () => {
@@ -48,6 +57,7 @@ describe('api', () => {
 
         expect(mockMockClient.getLifter).toHaveBeenCalledWith('test');
         expect(mockApiClient.getLifter).not.toHaveBeenCalled();
+        expect(mockLoadMockClient).toHaveBeenCalledOnce();
     });
 
     it('routes getLifter to apiClient when ENABLE_MOCK_API is false', async () => {
@@ -59,6 +69,18 @@ describe('api', () => {
 
         expect(mockApiClient.getLifter).toHaveBeenCalledWith('test');
         expect(mockMockClient.getLifter).not.toHaveBeenCalled();
+        expect(mockLoadMockClient).not.toHaveBeenCalled();
+    });
+
+    it('does not load mockClient when mock mode is requested in production', async () => {
+        mockConfig.NODE_ENV = 'production';
+        mockConfig.ENABLE_MOCK_API = true;
+
+        const { api } = await import('../../src/data/api');
+        await api.getLifter('test');
+
+        expect(mockApiClient.getLifter).toHaveBeenCalledWith('test');
+        expect(mockLoadMockClient).not.toHaveBeenCalled();
     });
 
     it('routes getMeet to mockClient when ENABLE_MOCK_API is true', async () => {
