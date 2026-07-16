@@ -1,6 +1,10 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "extends": ["config:recommended"],
+    "extends": [
+        "config:recommended",
+        "helpers:pinGitHubActionDigests",
+        ":separateMultipleMajorReleases"
+    ],
     "baseBranchPatterns": ["master"],
     "dependencyDashboard": true,
     "configMigration": true,
@@ -9,7 +13,6 @@
     "prHourlyLimit": 0,
     "prConcurrentLimit": 3,
     "platformAutomerge": false,
-    "rangeStrategy": "pin",
     "lockFileMaintenance": {
         "enabled": true,
         "automerge": false,
@@ -17,17 +20,40 @@
     },
     "packageRules": [
         {
+            "description": "Pin direct application dependencies",
             "matchManagers": ["npm"],
-            "matchDepTypes": ["engines"],
-            "rangeStrategy": "replace"
+            "matchDepTypes": [
+                "dependencies",
+                "devDependencies",
+                "optionalDependencies"
+            ],
+            "rangeStrategy": "pin"
+        },
+        {
+            "description": "Preserve compatibility ranges",
+            "matchManagers": ["npm"],
+            "matchDepTypes": ["engines", "peerDependencies"],
+            "rangeStrategy": "auto"
+        },
+        {
+            "description": "Keep Node.js on the supported release line",
+            "matchDatasources": ["node-version"],
+            "allowedVersions": ">=24 <25",
+            "groupName": "Node.js 24"
         },
         {
             "matchUpdateTypes": ["patch"],
             "groupName": "patch updates",
             "minimumReleaseAge": "5 days",
+            "minimumReleaseAgeBehaviour": "timestamp-required",
             "internalChecksFilter": "strict",
-            "prCreation": "not-pending",
             "automerge": true
+        },
+        {
+            "matchManagers": ["github-actions"],
+            "matchUpdateTypes": ["pinDigest", "digest"],
+            "groupName": "GitHub Actions digests",
+            "dependencyDashboardApproval": true
         },
         {
             "matchUpdateTypes": ["minor"],
@@ -37,12 +63,6 @@
         {
             "matchUpdateTypes": ["major"],
             "dependencyDashboardApproval": true
-        },
-        {
-            "matchManagers": ["github-actions"],
-            "groupName": "github actions",
-            "minimumReleaseAge": "5 days",
-            "automerge": true
         }
     ]
 }
