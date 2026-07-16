@@ -92,17 +92,23 @@ jobs:
                   IMAGE_TAG: powercord-bot-validate:${{ github.sha }}
               run: |
                   docker run -d --name bot-validate -p 3000:3000 "${IMAGE_TAG}"
-                  echo "Waiting for health endpoint..."
+                  echo "Waiting for liveness endpoint..."
                   for attempt in {1..30}; do
-                    echo "Health check attempt ${attempt}/30"
-                    if curl -sf http://localhost:3000/health > /dev/null; then
-                      echo "Health check passed"
+                    echo "Liveness check attempt ${attempt}/30"
+                    if curl -sf http://localhost:3000/live > /dev/null; then
+                      echo "Liveness check passed"
                       break
                     fi
                     sleep 2
                   done
-                  if ! curl -sf http://localhost:3000/health > /dev/null; then
-                    echo "Container did not become healthy in time" >&2
+                  if ! curl -sf http://localhost:3000/live > /dev/null; then
+                    echo "Container did not become live in time" >&2
+                    docker logs --tail 200 bot-validate || true
+                    exit 1
+                  fi
+                  readiness_status="$(curl -sS -o /dev/null -w '%{http_code}' http://localhost:3000/health)"
+                  if [[ "${readiness_status}" != "503" ]]; then
+                    echo "Expected readiness endpoint to return 503, got ${readiness_status}" >&2
                     docker logs --tail 200 bot-validate || true
                     exit 1
                   fi

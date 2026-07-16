@@ -19,9 +19,9 @@
     "@nuxt/fonts": "0.14.0",
     "@nuxt/icon": "2.2.1",
     "@nuxt/image": "2.0.0",
-    "@nuxt/ui": "4.6.1",
+    "@nuxt/ui": "4.8.0",
     "@nuxtjs/tailwindcss": "7.0.0-beta.1",
-    "nuxt": "4.4.6",
+    "nuxt": "4.4.7",
     "tailwindcss": "4.2.2"
   },
   "devDependencies": {

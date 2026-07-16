@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import logger from '../../src/logging/logger';
+import { isBotReady } from '../../src/utils/botState';
 import { config } from '../../src/utils/config';
 import { startHeartbeat } from '../../src/utils/heartbeat';
 
@@ -8,6 +9,7 @@ vi.mock('axios');
 vi.mock('../../src/logging/logger', () => ({
     default: {
         info: vi.fn(),
+        debug: vi.fn(),
         warn: vi.fn(),
         error: vi.fn(),
     },
@@ -19,12 +21,17 @@ vi.mock('../../src/utils/config', () => ({
     },
 }));
 
+vi.mock('../../src/utils/botState', () => ({
+    isBotReady: vi.fn(),
+}));
+
 const mockAxios = vi.mocked(axios, true);
 
 describe('heartbeat', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         vi.useFakeTimers();
+        vi.mocked(isBotReady).mockReturnValue(true);
     });
 
     afterEach(() => {
@@ -74,6 +81,25 @@ describe('heartbeat', () => {
 
         vi.advanceTimersByTime(60000);
         expect(mockAxios.get).toHaveBeenCalledTimes(3);
+    });
+
+    it('withholds heartbeats until the bot is ready', () => {
+        (config as any).BETTERSTACK_HEARTBEAT_URL =
+            'https://heartbeat.betterstack.com/test';
+        vi.mocked(isBotReady).mockReturnValue(false);
+
+        startHeartbeat();
+
+        expect(mockAxios.get).not.toHaveBeenCalled();
+        expect(logger.debug).toHaveBeenCalledWith(
+            { event: 'heartbeat.skipped', reason: 'bot_not_ready' },
+            'skipping BetterStack heartbeat while bot is not ready',
+        );
+
+        vi.mocked(isBotReady).mockReturnValue(true);
+        vi.advanceTimersByTime(60000);
+
+        expect(mockAxios.get).toHaveBeenCalledTimes(1);
     });
 
     it('logs error when heartbeat request fails', async () => {

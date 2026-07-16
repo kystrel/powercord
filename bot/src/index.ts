@@ -6,6 +6,7 @@ import { deployCommands } from './deploy-commands';
 import { errorLogFields } from './logging/fields';
 import logger from './logging/logger';
 import { Command } from './types/command';
+import { setDiscordClient } from './utils/botState';
 import { config } from './utils/config';
 import './utils/health';
 import { startHeartbeat } from './utils/heartbeat';
@@ -44,6 +45,7 @@ async function initializeBot() {
     const client = new Client({
         intents: [GatewayIntentBits.Guilds],
     });
+    setDiscordClient(client);
 
     client.commands = new Collection<string, Command>();
 

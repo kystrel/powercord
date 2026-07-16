@@ -4,8 +4,12 @@ packages:
 
 overrides:
     devalue: '5.8.1'
+    'esbuild@>=0.27.3 <0.28.1': '0.28.1'
     nitropack: '2.13.4'
     postcss: '8.5.15'
+    'shell-quote@>=1.1.0 <=1.8.3': '1.8.4'
+    'undici@>=6.0.0 <6.27.0': '6.27.0'
+    'undici@>=7.0.0 <7.28.0': '7.28.0'
 
 allowBuilds:
     '@parcel/watcher': true
