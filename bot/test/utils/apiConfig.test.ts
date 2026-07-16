@@ -42,7 +42,18 @@ describe('API configuration', () => {
 
         expect(isMockApiEnabled()).toBe(false);
         expect(() => validateApiConfiguration()).toThrow(
-            'ENABLE_MOCK_API cannot be enabled when NODE_ENV is production',
+            'ENABLE_MOCK_API can only be enabled when NODE_ENV is development or test',
+        );
+    });
+
+    it('rejects mock mode when NODE_ENV is not set', () => {
+        mockConfig.NODE_ENV = undefined;
+        mockConfig.API_BASE_URL = undefined;
+        mockConfig.ENABLE_MOCK_API = true;
+
+        expect(isMockApiEnabled()).toBe(false);
+        expect(() => validateApiConfiguration()).toThrow(
+            'ENABLE_MOCK_API can only be enabled when NODE_ENV is development or test',
         );
     });
 

@@ -1,13 +1,17 @@
 import { config } from './config';
 
+function isMockApiEnvironment(): boolean {
+    return config.NODE_ENV === 'development' || config.NODE_ENV === 'test';
+}
+
 export function isMockApiEnabled(): boolean {
-    return Boolean(config.ENABLE_MOCK_API && config.NODE_ENV !== 'production');
+    return Boolean(config.ENABLE_MOCK_API && isMockApiEnvironment());
 }
 
 export function validateApiConfiguration(): void {
-    if (config.ENABLE_MOCK_API && config.NODE_ENV === 'production') {
+    if (config.ENABLE_MOCK_API && !isMockApiEnvironment()) {
         throw new Error(
-            'ENABLE_MOCK_API cannot be enabled when NODE_ENV is production',
+            'ENABLE_MOCK_API can only be enabled when NODE_ENV is development or test',
         );
     }
 
