@@ -8,6 +8,7 @@ import { config } from './utils/config';
 interface DeployCommandsOptions {
     clientId?: string;
     discordToken?: string;
+    guildId?: string;
 }
 
 function loadCommandPayloads(): unknown[] {
@@ -45,35 +46,50 @@ function loadCommandPayloads(): unknown[] {
 export async function deployCommands({
     clientId = config.CLIENT_ID,
     discordToken = config.DISCORD_TOKEN,
+    guildId = config.DISCORD_GUILD_ID,
 }: DeployCommandsOptions = {}): Promise<void> {
     if (!clientId || !discordToken) {
-        logger.warn(
-            { event: 'discord_commands.unconfigured' },
-            'CLIENT_ID or DISCORD_TOKEN is not configured; skipping Discord command registration',
+        const missingConfiguration = [
+            !clientId && 'CLIENT_ID',
+            !discordToken && 'DISCORD_TOKEN',
+        ].filter((value): value is string => Boolean(value));
+        const error = new Error(
+            `Missing required Discord command deployment configuration: ${missingConfiguration.join(', ')}`,
         );
-        return;
+        logger.error(
+            {
+                event: 'discord_commands.configuration_invalid',
+                missingConfiguration,
+                ...errorLogFields(error),
+            },
+            'discord command deployment configuration is invalid',
+        );
+        throw error;
     }
 
     const commands = loadCommandPayloads();
     const rest = new REST().setToken(discordToken);
+    const scope = guildId ? 'guild' : 'global';
     try {
         logger.info(
             {
                 event: 'discord_commands.refresh_started',
                 commandCount: commands.length,
+                scope,
             },
             'started refreshing application commands',
         );
 
-        // Register slash commands globally
-        const data = (await rest.put(Routes.applicationCommands(clientId), {
-            body: commands,
-        })) as unknown[];
+        const route = guildId
+            ? Routes.applicationGuildCommands(clientId, guildId)
+            : Routes.applicationCommands(clientId);
+        const data = (await rest.put(route, { body: commands })) as unknown[];
 
         logger.info(
             {
                 event: 'discord_commands.refresh_completed',
                 commandCount: data.length,
+                scope,
             },
             'successfully refreshed application commands',
         );
@@ -82,13 +98,17 @@ export async function deployCommands({
             {
                 event: 'discord_commands.refresh_failed',
                 commandCount: commands.length,
+                scope,
                 ...errorLogFields(error),
             },
             'failed to refresh application commands',
         );
+        throw error;
     }
 }
 
 if (require.main === module) {
-    void deployCommands();
+    void deployCommands().catch(() => {
+        process.exitCode = 1;
+    });
 }
