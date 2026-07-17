@@ -38,9 +38,16 @@
         },
         {
             "description": "Keep Node.js on the supported release line",
-            "matchDatasources": ["node-version"],
-            "allowedVersions": ">=24 <25",
+            "matchPackageNames": ["node"],
+            "matchDatasources": ["node-version", "docker"],
+            "allowedVersions": "/^24\\./",
             "groupName": "Node.js 24"
+        },
+        {
+            "description": "Group container image digest updates",
+            "matchManagers": ["dockerfile"],
+            "matchUpdateTypes": ["digest"],
+            "groupName": "container image digests"
         },
         {
             "matchUpdateTypes": ["patch"],
