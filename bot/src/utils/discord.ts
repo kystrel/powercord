@@ -15,7 +15,9 @@ export const DISCORD_LIMITS = {
 } as const;
 
 export function escapeDiscordMarkdown(value: string): string {
-    return value.replace(/([\\`*_{}\[\]()#+\-.!|>~])/g, '\\$1');
+    return value
+        .replace(/@(everyone|here)\b/g, '@\u200B$1')
+        .replace(/([\\`*_{}\[\]()#+\-.!|>~])/g, '\\$1');
 }
 
 export function escapeDiscordCodeBlock(value: string): string {
@@ -144,6 +146,27 @@ export function enforceEmbedLimits(embed: EmbedBuilder): EmbedBuilder {
         countEmbedCharacters(embed.toJSON()) - DISCORD_LIMITS.embed.total;
     if (excess <= 0) return embed;
 
+    if (embed.toJSON().footer) {
+        const currentFooter = embed.toJSON().footer!;
+        const result = shrinkText(currentFooter.text, excess, 1);
+        embed.setFooter({
+            text: result.value,
+            iconURL: currentFooter.icon_url,
+        });
+        excess = result.excess;
+    }
+
+    if (excess > 0 && embed.toJSON().author) {
+        const currentAuthor = embed.toJSON().author!;
+        const result = shrinkText(currentAuthor.name, excess, 1);
+        embed.setAuthor({
+            name: result.value,
+            iconURL: currentAuthor.icon_url,
+            url: currentAuthor.url,
+        });
+        excess = result.excess;
+    }
+
     for (let index = fields.length - 1; index >= 0 && excess > 0; index--) {
         const valueResult = shrinkText(fields[index].value, excess, 1);
         fields[index].value = valueResult.value;
@@ -164,7 +187,9 @@ export function enforceEmbedLimits(embed: EmbedBuilder): EmbedBuilder {
 
     if (excess > 0 && embed.toJSON().title) {
         const currentTitle = embed.toJSON().title!;
-        embed.setTitle(shrinkText(currentTitle, excess, 1).value);
+        const result = shrinkText(currentTitle, excess, 1);
+        embed.setTitle(result.value);
+        excess = result.excess;
     }
 
     return embed;

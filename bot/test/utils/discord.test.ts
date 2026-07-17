@@ -22,8 +22,12 @@ const countEmbedCharacters = (embed: ReturnType<EmbedBuilder['toJSON']>) =>
 
 describe('Discord text utilities', () => {
     it('escapes Discord markdown and mention syntax', () => {
-        expect(escapeDiscordMarkdown('<@123> **bold** [link](url)')).toBe(
-            '<@123\\> \\*\\*bold\\*\\* \\[link\\]\\(url\\)',
+        expect(
+            escapeDiscordMarkdown(
+                '<@123> @everyone @here **bold** [link](url)',
+            ),
+        ).toBe(
+            '<@123\\> @\u200Beveryone @\u200Bhere \\*\\*bold\\*\\* \\[link\\]\\(url\\)',
         );
     });
 
@@ -78,8 +82,8 @@ describe('Discord text utilities', () => {
         expect(data.description!.length).toBeLessThanOrEqual(
             DISCORD_LIMITS.embed.description,
         );
-        expect(data.author?.name).toHaveLength(DISCORD_LIMITS.embed.authorName);
-        expect(data.footer?.text).toHaveLength(DISCORD_LIMITS.embed.footerText);
+        expect(data.author?.name).toBe('…');
+        expect(data.footer?.text).toBe('…');
         expect(data.fields).toHaveLength(5);
         expect(
             data.fields?.every(
