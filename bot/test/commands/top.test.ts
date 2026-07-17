@@ -122,6 +122,25 @@ describe('Top command', () => {
         );
     });
 
+    it('escapes and limits untrusted lifter names', async () => {
+        mockGetTopLifters.mockResolvedValue([
+            {
+                ...makeLifter('unsafe', 500),
+                name: '**<@123> Unsafe**',
+                sex: '*M*',
+            },
+        ]);
+        const interaction = createChatInputInteraction();
+
+        await execute(interaction);
+
+        const { embeds } = vi.mocked(interaction.editReply).mock
+            .calls[0][0] as any;
+        expect(embeds[0].fields[0].name.length).toBeLessThanOrEqual(256);
+        expect(embeds[0].fields[0].name).toContain('\\*\\*<@123\\>');
+        expect(embeds[0].fields[0].name).toContain('(\\*M\\*)');
+    });
+
     it('sets up a message component collector after replying', async () => {
         mockGetTopLifters.mockResolvedValue(mockTopLifters);
         const interaction = createChatInputInteraction();

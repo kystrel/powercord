@@ -91,6 +91,46 @@ describe('Lifter command', () => {
             );
         });
 
+        it('escapes and limits untrusted lifter data', async () => {
+            mockGetLifter.mockResolvedValue({
+                ...mockLifter,
+                name: `**<@123> ${'x'.repeat(300)}`,
+                meets: [
+                    {
+                        ...mockLifter.meets[0],
+                        federation: '**IPF**',
+                        name: '<@123> Championship',
+                        state: '*Attica*',
+                        equipment: 'Raw```@everyone',
+                        date: '**<@789>**',
+                    },
+                ],
+                personalBests: [
+                    {
+                        ...mockLifter.personalBests[0],
+                        equipment: `Raw\`\`\`${'x'.repeat(5_000)}`,
+                    },
+                ],
+            });
+            const interaction = createChatInputInteraction({ name: 'unsafe' });
+
+            await execute(interaction);
+
+            const { embeds } = vi.mocked(interaction.editReply).mock
+                .calls[0][0] as any;
+            const embed = embeds[0];
+            expect(embed.title.length).toBeLessThanOrEqual(256);
+            expect(embed.title).toContain('\\*\\*<@123\\>');
+            expect(embed.description.length).toBeLessThanOrEqual(4_096);
+            expect(embed.description).toContain('\u200B');
+            expect(embed.fields[0].name.length).toBeLessThanOrEqual(256);
+            expect(embed.fields[0].name).toContain('\\*\\*IPF\\*\\*');
+            expect(embed.fields[0].value).toContain('\\*Attica\\*');
+            expect(embed.fields[0].value).toContain(
+                'Date: \\*\\*<@789\\>\\*\\*',
+            );
+        });
+
         it.each([
             [1, '1st'],
             [2, '2nd'],
@@ -138,6 +178,19 @@ describe('Lifter command', () => {
             expect(interaction.deferReply).toHaveBeenCalled();
             expect(interaction.editReply).toHaveBeenCalledWith(
                 'No data found for lifter: UnknownLifter.',
+            );
+        });
+
+        it('escapes user input in the not-found message', async () => {
+            mockGetLifter.mockResolvedValue(undefined);
+            const interaction = createChatInputInteraction({
+                name: '<@123> **Unknown**',
+            });
+
+            await execute(interaction);
+
+            expect(interaction.editReply).toHaveBeenCalledWith(
+                'No data found for lifter: <@123\\> \\*\\*Unknown\\*\\*.',
             );
         });
 

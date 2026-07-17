@@ -15,6 +15,12 @@ import {
 } from '../../logging/fields';
 import logger from '../../logging/logger';
 import { TopLifter } from '../../types/types';
+import {
+    DISCORD_LIMITS,
+    enforceEmbedLimits,
+    escapeDiscordMarkdown,
+    truncateDiscordText,
+} from '../../utils/discord';
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -65,7 +71,10 @@ module.exports = {
 
                 const fields = pageLifters.flatMap((lifter, index) => [
                     {
-                        name: `\`${startIndex + index + 1}.\` ${lifter.name} (${lifter.sex})`,
+                        name: truncateDiscordText(
+                            `\`${startIndex + index + 1}.\` ${escapeDiscordMarkdown(lifter.name)} (${escapeDiscordMarkdown(lifter.sex)})`,
+                            DISCORD_LIMITS.embed.fieldName,
+                        ),
                         value: `squat: ${lifter.squat ?? '—'} | bench: ${lifter.bench ?? '—'} | deadlift: ${lifter.deadlift ?? '—'}`,
                         inline: true,
                     },
@@ -85,6 +94,7 @@ module.exports = {
                 embed.setDescription(
                     `Top lifters sorted by dots - Page ${page} of ${maxPages}`,
                 );
+                enforceEmbedLimits(embed);
             };
 
             updatePage(currentPage);

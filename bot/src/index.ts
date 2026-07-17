@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { Client, Collection, GatewayIntentBits } from 'discord.js';
+import { Client, Collection } from 'discord.js';
+import { discordClientOptions } from './constants/client';
 import { startApiDataRefresh } from './data/api';
 import { deployCommands } from './deploy-commands';
 import logger from './logging/logger';
@@ -42,9 +43,7 @@ async function initializeBot() {
         return;
     }
 
-    const client = new Client({
-        intents: [GatewayIntentBits.Guilds],
-    });
+    const client = new Client(discordClientOptions);
     setDiscordClient(client);
 
     client.commands = new Collection<string, Command>();
