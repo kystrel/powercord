@@ -1,6 +1,9 @@
 import { Routes } from 'discord.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { deployCommands, runCommandDeployment } from '../src/deploy-commands';
+import {
+    deployCommands,
+    runCommandDeployment,
+} from '../scripts/deploy-commands';
 import logger from '../src/logging/logger';
 
 const { mockRest, mockSetToken, mockPut, mockReaddirSync } = vi.hoisted(() => ({
@@ -127,6 +130,9 @@ describe('deployCommands', () => {
         );
         expect(Routes.applicationCommands).toHaveBeenCalledWith('client-123');
         expect(Routes.applicationGuildCommands).not.toHaveBeenCalled();
+        expect(mockReaddirSync).toHaveBeenCalledWith(
+            expect.stringMatching(/src[\\/]commands$/),
+        );
         expect(mockPut).toHaveBeenCalledWith('/commands', { body: [] });
         expect(logger.info).toHaveBeenCalledWith(
             expect.objectContaining({

@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { REST, Routes } from 'discord.js';
-import { errorLogFields } from './logging/fields';
-import logger from './logging/logger';
-import { config } from './utils/config';
+import { errorLogFields } from '../src/logging/fields';
+import logger from '../src/logging/logger';
+import { config } from '../src/utils/config';
 
 interface DeployCommandsOptions {
     clientId?: string;
@@ -13,7 +13,7 @@ interface DeployCommandsOptions {
 
 function loadCommandPayloads(): unknown[] {
     const commands: unknown[] = [];
-    const foldersPath = path.join(__dirname, 'commands');
+    const foldersPath = path.join(__dirname, '../src/commands');
     const commandFolders = fs.readdirSync(foldersPath);
     const runtimeExtension = path.extname(__filename);
 
