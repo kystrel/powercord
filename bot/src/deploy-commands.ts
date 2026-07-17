@@ -67,10 +67,12 @@ export async function deployCommands({
         throw error;
     }
 
-    const commands = loadCommandPayloads();
-    const rest = new REST().setToken(discordToken);
     const scope = guildId ? 'guild' : 'global';
+    let commands: unknown[] = [];
     try {
+        commands = loadCommandPayloads();
+        const rest = new REST().setToken(discordToken);
+
         logger.info(
             {
                 event: 'discord_commands.refresh_started',

@@ -179,4 +179,28 @@ describe('deployCommands', () => {
             'failed to refresh application commands',
         );
     });
+
+    it('logs and rejects when command discovery fails', async () => {
+        mockReaddirSync.mockImplementation(() => {
+            throw new Error('Command directory unavailable');
+        });
+
+        await expect(
+            deployCommands({
+                clientId: 'client-123',
+                discordToken: 'token-abc',
+            }),
+        ).rejects.toThrow('Command directory unavailable');
+
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                event: 'discord_commands.refresh_failed',
+                commandCount: 0,
+                scope: 'global',
+                err: expect.any(Error),
+            }),
+            'failed to refresh application commands',
+        );
+        expect(mockRest).not.toHaveBeenCalled();
+    });
 });
