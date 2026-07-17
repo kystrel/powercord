@@ -1,6 +1,7 @@
 require('dotenv').config({ quiet: true });
 
 interface Config {
+    NODE_ENV?: string;
     CLIENT_ID?: string;
     DISCORD_TOKEN?: string;
     API_BASE_URL?: string;
@@ -20,6 +21,7 @@ function parsePositiveInteger(value: string | undefined): number | undefined {
 }
 
 export const config: Config = {
+    NODE_ENV: process.env.NODE_ENV,
     CLIENT_ID: process.env.CLIENT_ID,
     DISCORD_TOKEN: process.env.DISCORD_TOKEN,
     API_BASE_URL: process.env.API_BASE_URL,

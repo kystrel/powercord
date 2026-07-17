@@ -91,7 +91,8 @@ jobs:
               env:
                   IMAGE_TAG: powercord-bot-validate:${{ github.sha }}
               run: |
-                  docker run -d --name bot-validate -p 3000:3000 "${IMAGE_TAG}"
+                  docker run -d --name bot-validate -p 3000:3000 \
+                    -e API_BASE_URL=http://localhost:3000 "${IMAGE_TAG}"
                   echo "Waiting for liveness endpoint..."
                   for attempt in {1..30}; do
                     echo "Liveness check attempt ${attempt}/30"
