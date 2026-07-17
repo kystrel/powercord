@@ -37,6 +37,18 @@ export class EmbedBuilder {
     url: unknown;
     fields: unknown[] = [];
 
+    get data() {
+        return {
+            author: this.author,
+            color: this.color,
+            title: this.title,
+            description: this.description,
+            footer: this.footer,
+            url: this.url,
+            fields: this.fields,
+        };
+    }
+
     setAuthor(author: unknown): this {
         this.author = author;
         return this;
@@ -68,6 +80,9 @@ export class EmbedBuilder {
     addFields(fields: unknown[]): this {
         this.fields = [...this.fields, ...fields];
         return this;
+    }
+    toJSON() {
+        return this.data;
     }
 }
 

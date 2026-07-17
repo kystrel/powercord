@@ -114,6 +114,27 @@ describe('Meet command', () => {
         );
     });
 
+    it('escapes and limits untrusted meet data', async () => {
+        mockGetMeet.mockResolvedValue({
+            ...mockSinglePageMeet,
+            name: `**<@123> ${'x'.repeat(5_000)}`,
+            federation: '*IPF*',
+            entries: [makeEntry('**<@456> Lifter**', 500)],
+        });
+        const interaction = createChatInputInteraction({ name: 'unsafe' });
+
+        await execute(interaction);
+
+        const { embeds } = vi.mocked(interaction.editReply).mock
+            .calls[0][0] as any;
+        const embed = embeds[0];
+        expect(embed.description.length).toBeLessThanOrEqual(4_096);
+        expect(embed.description).toContain('\\*IPF\\*');
+        expect(embed.description).toContain('\\*\\*<@123\\>');
+        expect(embed.fields[0].name.length).toBeLessThanOrEqual(256);
+        expect(embed.fields[0].name).toContain('\\*\\*<@456\\>');
+    });
+
     it('sorts entries without changing the API response', async () => {
         const meet = {
             ...mockSinglePageMeet,
@@ -231,6 +252,19 @@ describe('Meet command', () => {
         expect(interaction.deferReply).toHaveBeenCalled();
         expect(interaction.editReply).toHaveBeenCalledWith(
             'No data found for meet: NonExistentMeet.',
+        );
+    });
+
+    it('escapes user input in the not-found message', async () => {
+        mockGetMeet.mockResolvedValue(undefined);
+        const interaction = createChatInputInteraction({
+            name: '<@123> **Unknown**',
+        });
+
+        await execute(interaction);
+
+        expect(interaction.editReply).toHaveBeenCalledWith(
+            'No data found for meet: <@123\\> \\*\\*Unknown\\*\\*.',
         );
     });
 

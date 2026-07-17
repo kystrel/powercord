@@ -13,6 +13,7 @@ import {
     interactionLocation,
 } from '../../logging/fields';
 import logger from '../../logging/logger';
+import { enforceEmbedLimits } from '../../utils/discord';
 
 function formatAutocompleteStatus(status: AutocompleteCacheStatus): string {
     if (status.source === 'http') {
@@ -69,6 +70,7 @@ module.exports = {
                         `${formatAutocompleteStatus(autocompleteStatus)}\n\n` +
                         `Credit to [OpenPowerlifting](https://www.openpowerlifting.org/) for data used`,
                 );
+            enforceEmbedLimits(embed);
 
             await interaction.editReply({ content: null, embeds: [embed] });
             logger.info(

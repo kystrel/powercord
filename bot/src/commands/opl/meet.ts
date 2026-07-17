@@ -16,6 +16,12 @@ import {
 } from '../../logging/fields';
 import logger from '../../logging/logger';
 import { Meet } from '../../types/types';
+import {
+    DISCORD_LIMITS,
+    enforceEmbedLimits,
+    escapeDiscordMarkdown,
+    truncateDiscordText,
+} from '../../utils/discord';
 
 const OPL_MEET_PATH_PATTERN =
     /^[A-Za-z0-9][A-Za-z0-9._~-]*(\/[A-Za-z0-9][A-Za-z0-9._~-]*)+$/;
@@ -48,18 +54,27 @@ function getOpenPowerliftingMeetUrl(url: string | null | undefined) {
     }
 }
 
-function escapeMarkdownText(value: string) {
-    return value.replace(/([\\`*_{}\[\]()#+\-.!|>~])/g, '\\$1');
-}
-
 function formatMeetName(
     year: string,
     federation: string,
     name: string,
     url: string | undefined,
+    maxLength: number,
 ) {
-    const escapedName = escapeMarkdownText(`${year} ${federation} ${name}`);
-    return url ? `[**${escapedName}**](${url})` : `**${escapedName}**`;
+    const escapedName = escapeDiscordMarkdown(`${year} ${federation} ${name}`);
+    const boldOverhead = 4;
+    const linkOverhead = url ? url.length + 8 : Number.POSITIVE_INFINITY;
+
+    if (url && linkOverhead < maxLength) {
+        const label = truncateDiscordText(
+            escapedName,
+            maxLength - linkOverhead,
+        );
+        return `[**${label}**](${url})`;
+    }
+
+    const label = truncateDiscordText(escapedName, maxLength - boldOverhead);
+    return `**${label}**`;
 }
 
 function compareDots(a: Meet['entries'][0], b: Meet['entries'][0]): number {
@@ -108,7 +123,11 @@ module.exports = {
             const meet: Meet | undefined = await fetchMeet(name);
 
             if (!meet || meet.entries.length === 0) {
-                await interaction.editReply(`No data found for meet: ${name}.`);
+                const notFoundMessage = truncateDiscordText(
+                    `No data found for meet: ${escapeDiscordMarkdown(name)}.`,
+                    DISCORD_LIMITS.message,
+                );
+                await interaction.editReply(notFoundMessage);
                 logger.info(
                     {
                         event: 'command.completed',
@@ -126,12 +145,6 @@ module.exports = {
 
             const entries = meet.entries.toSorted(compareDots);
             const meetUrl = getOpenPowerliftingMeetUrl(meet.url);
-            const meetName = formatMeetName(
-                meet.year,
-                meet.federation,
-                meet.name,
-                meetUrl,
-            );
 
             const embed = new EmbedBuilder()
                 .setColor(getEmbedColor())
@@ -151,7 +164,10 @@ module.exports = {
                 const pageEntries = entries.slice(offset, offset + pageSize);
                 const fields = pageEntries.flatMap((entry, index) => [
                     {
-                        name: `\`${offset + index + 1}.\` ${entry.name}`,
+                        name: truncateDiscordText(
+                            `\`${offset + index + 1}.\` ${escapeDiscordMarkdown(entry.name)}`,
+                            DISCORD_LIMITS.embed.fieldName,
+                        ),
                         value: `Squat: ${entry.squat ?? '—'} | Bench: ${entry.bench ?? '—'} | Deadlift: ${entry.deadlift ?? '—'}`,
                         inline: true,
                     },
@@ -167,9 +183,19 @@ module.exports = {
                     },
                 ]);
                 embed.setFields(fields);
-                embed.setDescription(
-                    `Top lifters for ${meetName}, page ${page}`,
+                const prefix = 'Top lifters for ';
+                const suffix = `, page ${page}`;
+                const meetName = formatMeetName(
+                    meet.year,
+                    meet.federation,
+                    meet.name,
+                    meetUrl,
+                    DISCORD_LIMITS.embed.description -
+                        prefix.length -
+                        suffix.length,
                 );
+                embed.setDescription(`${prefix}${meetName}${suffix}`);
+                enforceEmbedLimits(embed);
             };
 
             updateFields(1);

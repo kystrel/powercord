@@ -14,6 +14,14 @@ import {
 } from '../../logging/fields';
 import logger from '../../logging/logger';
 import { Lifter } from '../../types/types';
+import {
+    DISCORD_LIMITS,
+    enforceEmbedLimits,
+    escapeDiscordMarkdown,
+    formatDiscordCodeBlock,
+    sanitizeDiscordText,
+    truncateDiscordText,
+} from '../../utils/discord';
 
 async function fetchLifter(name: string): Promise<Lifter | undefined> {
     return api.getLifter(name);
@@ -80,9 +88,11 @@ module.exports = {
             const lifter: Lifter | undefined = await fetchLifter(name);
 
             if (!lifter || lifter.meets.length === 0) {
-                await interaction.editReply(
-                    `No data found for lifter: ${name}.`,
+                const notFoundMessage = truncateDiscordText(
+                    `No data found for lifter: ${escapeDiscordMarkdown(name)}.`,
+                    DISCORD_LIMITS.message,
                 );
+                await interaction.editReply(notFoundMessage);
                 logger.info(
                     {
                         event: 'command.completed',
@@ -100,19 +110,32 @@ module.exports = {
 
             const embed = new EmbedBuilder()
                 .setColor(getEmbedColor())
-                .setTitle(lifter.name)
+                .setTitle(
+                    sanitizeDiscordText(
+                        lifter.name,
+                        DISCORD_LIMITS.embed.title,
+                    ),
+                )
                 .setFooter({ text: getEmbedFooter() });
 
-            let formattedPersonalBests;
             if (lifter.personalBests && lifter.personalBests.length > 0) {
-                formattedPersonalBests = lifter.personalBests
-                    .map(
-                        (pb) =>
-                            `\`\`\`Equipment: ${pb.equipment}\nS: ${pb.squat ?? ''} B: ${pb.bench ?? ''} D: ${pb.deadlift ?? ''} Total: ${pb.total} DOTS: ${pb.dots}\`\`\``,
-                    )
-                    .join('');
+                const heading = '**Personal Bests**\n';
+                let remaining =
+                    DISCORD_LIMITS.embed.description - heading.length;
+                const personalBestBlocks: string[] = [];
+
+                for (const pb of lifter.personalBests) {
+                    if (remaining <= 6) break;
+                    const block = formatDiscordCodeBlock(
+                        `Equipment: ${pb.equipment}\nS: ${pb.squat ?? ''} B: ${pb.bench ?? ''} D: ${pb.deadlift ?? ''} Total: ${pb.total} DOTS: ${pb.dots}`,
+                        remaining,
+                    );
+                    personalBestBlocks.push(block);
+                    remaining -= block.length;
+                }
+
                 embed.setDescription(
-                    `**Personal Bests**\n${formattedPersonalBests}`,
+                    `${heading}${personalBestBlocks.join('')}`,
                 );
             }
 
@@ -122,19 +145,28 @@ module.exports = {
 
             const fields = lifter.meets.slice(0, 3).flatMap((meet, index) => [
                 {
-                    name: `\`${index + 1}.\` ${meet.federation} ${meet.name}`,
-                    value: `
-                    ${formatPlacement(meet.place)} Place${meet.state ? `, ${meet.state}` : ''}
-                    Date: ${meet.date}
+                    name: truncateDiscordText(
+                        `\`${index + 1}.\` ${escapeDiscordMarkdown(meet.federation)} ${escapeDiscordMarkdown(meet.name)}`,
+                        DISCORD_LIMITS.embed.fieldName,
+                    ),
+                    value: truncateDiscordText(
+                        `
+                    ${formatPlacement(meet.place)} Place${meet.state ? `, ${escapeDiscordMarkdown(meet.state)}` : ''}
+                    Date: ${escapeDiscordMarkdown(meet.date)}
                     Age: ${meet.age ?? '—'}
-                    Equip: ${meet.equipment}
+                    Equip: ${escapeDiscordMarkdown(meet.equipment)}
                     Class: ${meet.weightClass ?? '—'}
                     Weight: ${meet.bodyWeight ?? '—'}`,
+                        DISCORD_LIMITS.embed.fieldValue,
+                    ),
                     inline: true,
                 },
                 {
                     name: `\u200B`,
-                    value: `\`\`\`Squat: ${meet.squat ?? '—'}\nBench: ${meet.bench ?? '—'}\nDead: ${meet.deadlift ?? '—'}\n\nTotal: ${meet.total ?? '—'}\nDOTS: ${meet.dots ?? '—'}\`\`\``,
+                    value: formatDiscordCodeBlock(
+                        `Squat: ${meet.squat ?? '—'}\nBench: ${meet.bench ?? '—'}\nDead: ${meet.deadlift ?? '—'}\n\nTotal: ${meet.total ?? '—'}\nDOTS: ${meet.dots ?? '—'}`,
+                        DISCORD_LIMITS.embed.fieldValue,
+                    ),
                     inline: true,
                 },
                 {
@@ -145,6 +177,7 @@ module.exports = {
             ]);
 
             embed.addFields(fields);
+            enforceEmbedLimits(embed);
 
             await interaction.editReply({ embeds: [embed] });
             logger.info(
