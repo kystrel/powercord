@@ -107,8 +107,14 @@ export async function deployCommands({
     }
 }
 
-if (require.main === module) {
-    void deployCommands().catch(() => {
+export async function runCommandDeployment(): Promise<void> {
+    try {
+        await deployCommands();
+    } catch {
         process.exitCode = 1;
-    });
+    }
+}
+
+if (require.main === module) {
+    void runCommandDeployment();
 }

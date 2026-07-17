@@ -1,6 +1,6 @@
 import { Routes } from 'discord.js';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { deployCommands } from '../src/deploy-commands';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { deployCommands, runCommandDeployment } from '../src/deploy-commands';
 import logger from '../src/logging/logger';
 
 const { mockRest, mockSetToken, mockPut, mockReaddirSync } = vi.hoisted(() => ({
@@ -39,14 +39,21 @@ vi.mock('node:fs', () => ({
 }));
 
 describe('deployCommands', () => {
+    const originalExitCode = process.exitCode;
+
     beforeEach(() => {
         vi.clearAllMocks();
+        process.exitCode = undefined;
         mockReaddirSync.mockReturnValue([]);
         mockPut.mockResolvedValue([]);
         mockSetToken.mockReturnValue({ put: mockPut });
         mockRest.mockImplementation(function () {
             return { setToken: mockSetToken };
         });
+    });
+
+    afterEach(() => {
+        process.exitCode = originalExitCode;
     });
 
     it('rejects command registration when Discord configuration is missing', async () => {
@@ -63,6 +70,44 @@ describe('deployCommands', () => {
             'discord command deployment configuration is invalid',
         );
         expect(mockRest).not.toHaveBeenCalled();
+    });
+
+    it('rejects command registration when only the client ID is configured', async () => {
+        await expect(
+            deployCommands({ clientId: 'client-123' }),
+        ).rejects.toThrow(
+            'Missing required Discord command deployment configuration: DISCORD_TOKEN',
+        );
+
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                event: 'discord_commands.configuration_invalid',
+                missingConfiguration: ['DISCORD_TOKEN'],
+            }),
+            'discord command deployment configuration is invalid',
+        );
+    });
+
+    it('rejects command registration when only the token is configured', async () => {
+        await expect(
+            deployCommands({ discordToken: 'token-abc' }),
+        ).rejects.toThrow(
+            'Missing required Discord command deployment configuration: CLIENT_ID',
+        );
+
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                event: 'discord_commands.configuration_invalid',
+                missingConfiguration: ['CLIENT_ID'],
+            }),
+            'discord command deployment configuration is invalid',
+        );
+    });
+
+    it('sets a failing exit code when standalone deployment fails', async () => {
+        await runCommandDeployment();
+
+        expect(process.exitCode).toBe(1);
     });
 
     it('registers commands and logs success when credentials are provided', async () => {
