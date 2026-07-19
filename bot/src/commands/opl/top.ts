@@ -4,8 +4,8 @@ import {
     ButtonStyle,
     ChatInputCommandInteraction,
     EmbedBuilder,
-    SlashCommandBuilder,
 } from 'discord.js';
+import { topCommandDefinition } from '../../command-definitions';
 import { getEmbedColor, getEmbedFooter } from '../../constants/embed';
 import { api } from '../../data/api';
 import {
@@ -23,9 +23,7 @@ import {
 } from '../../utils/discord';
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('top')
-        .setDescription('Display top ranked lifters'),
+    data: topCommandDefinition,
     async execute(interaction: ChatInputCommandInteraction) {
         const startedAt = Date.now();
         const logContext = interactionLocation(interaction);

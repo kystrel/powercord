@@ -1,8 +1,5 @@
-import {
-    ChatInputCommandInteraction,
-    EmbedBuilder,
-    SlashCommandBuilder,
-} from 'discord.js';
+import { ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
+import { statusCommandDefinition } from '../../command-definitions';
 import {
     autocompleteCache,
     AutocompleteCacheStatus,
@@ -34,9 +31,7 @@ function formatAutocompleteStatus(status: AutocompleteCacheStatus): string {
 }
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('status')
-        .setDescription(`Returns the bot's status`),
+    data: statusCommandDefinition,
     async execute(interaction: ChatInputCommandInteraction) {
         const startedAt = Date.now();
         const logContext = interactionLocation(interaction);

@@ -2,9 +2,8 @@ import {
     AutocompleteInteraction,
     ChatInputCommandInteraction,
     EmbedBuilder,
-    SlashCommandBuilder,
-    SlashCommandStringOption,
 } from 'discord.js';
+import { lifterCommandDefinition } from '../../command-definitions';
 import { getEmbedColor, getEmbedFooter } from '../../constants/embed';
 import { api } from '../../data/api';
 import {
@@ -48,16 +47,7 @@ function formatPlacement(place: number): string {
 }
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('lifter')
-        .setDescription(`Displays lifter's last 3 meets`)
-        .addStringOption((option: SlashCommandStringOption) =>
-            option
-                .setName('name')
-                .setDescription('The name of the lifter')
-                .setRequired(true)
-                .setAutocomplete(true),
-        ),
+    data: lifterCommandDefinition,
     async execute(interaction: ChatInputCommandInteraction) {
         const startedAt = Date.now();
         const logContext = interactionLocation(interaction);

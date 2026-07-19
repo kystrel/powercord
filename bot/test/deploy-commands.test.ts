@@ -6,11 +6,10 @@ import {
 } from '../scripts/deploy-commands';
 import logger from '../src/logging/logger';
 
-const { mockRest, mockSetToken, mockPut, mockReaddirSync } = vi.hoisted(() => ({
+const { mockRest, mockSetToken, mockPut } = vi.hoisted(() => ({
     mockRest: vi.fn(),
     mockSetToken: vi.fn(),
     mockPut: vi.fn(),
-    mockReaddirSync: vi.fn().mockReturnValue([]),
 }));
 
 vi.mock('../src/logging/logger', () => ({
@@ -29,17 +28,19 @@ vi.mock('../src/utils/config', () => ({
     },
 }));
 
-vi.mock('discord.js', () => ({
-    REST: mockRest,
-    Routes: {
-        applicationCommands: vi.fn().mockReturnValue('/commands'),
-        applicationGuildCommands: vi.fn().mockReturnValue('/guild-commands'),
-    },
-}));
-
-vi.mock('node:fs', () => ({
-    default: { readdirSync: mockReaddirSync },
-}));
+vi.mock('discord.js', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('discord.js')>();
+    return {
+        ...actual,
+        REST: mockRest,
+        Routes: {
+            applicationCommands: vi.fn().mockReturnValue('/commands'),
+            applicationGuildCommands: vi
+                .fn()
+                .mockReturnValue('/guild-commands'),
+        },
+    };
+});
 
 describe('deployCommands', () => {
     const originalExitCode = process.exitCode;
@@ -47,7 +48,6 @@ describe('deployCommands', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         process.exitCode = undefined;
-        mockReaddirSync.mockReturnValue([]);
         mockPut.mockResolvedValue([]);
         mockSetToken.mockReturnValue({ put: mockPut });
         mockRest.mockImplementation(function () {
@@ -130,10 +130,19 @@ describe('deployCommands', () => {
         );
         expect(Routes.applicationCommands).toHaveBeenCalledWith('client-123');
         expect(Routes.applicationGuildCommands).not.toHaveBeenCalled();
-        expect(mockReaddirSync).toHaveBeenCalledWith(
-            expect.stringMatching(/src[\\/]commands$/),
-        );
-        expect(mockPut).toHaveBeenCalledWith('/commands', { body: [] });
+        const request = mockPut.mock.calls[0][1] as {
+            body: Array<{ name: string }>;
+        };
+        expect(mockPut).toHaveBeenCalledWith('/commands', {
+            body: expect.any(Array),
+        });
+        expect(request.body.map((command) => command.name)).toEqual([
+            'lifter',
+            'meet',
+            'top',
+            'ping',
+            'status',
+        ]);
         expect(logger.info).toHaveBeenCalledWith(
             expect.objectContaining({
                 event: 'discord_commands.refresh_completed',
@@ -156,7 +165,9 @@ describe('deployCommands', () => {
             'guild-456',
         );
         expect(Routes.applicationCommands).not.toHaveBeenCalled();
-        expect(mockPut).toHaveBeenCalledWith('/guild-commands', { body: [] });
+        expect(mockPut).toHaveBeenCalledWith('/guild-commands', {
+            body: expect.any(Array),
+        });
         expect(logger.info).toHaveBeenCalledWith(
             expect.objectContaining({
                 event: 'discord_commands.refresh_completed',
@@ -179,34 +190,11 @@ describe('deployCommands', () => {
         expect(logger.error).toHaveBeenCalledWith(
             expect.objectContaining({
                 event: 'discord_commands.refresh_failed',
+                commandCount: 5,
                 scope: 'global',
                 err: expect.any(Error),
             }),
             'failed to refresh application commands',
         );
-    });
-
-    it('logs and rejects when command discovery fails', async () => {
-        mockReaddirSync.mockImplementation(() => {
-            throw new Error('Command directory unavailable');
-        });
-
-        await expect(
-            deployCommands({
-                clientId: 'client-123',
-                discordToken: 'token-abc',
-            }),
-        ).rejects.toThrow('Command directory unavailable');
-
-        expect(logger.error).toHaveBeenCalledWith(
-            expect.objectContaining({
-                event: 'discord_commands.refresh_failed',
-                commandCount: 0,
-                scope: 'global',
-                err: expect.any(Error),
-            }),
-            'failed to refresh application commands',
-        );
-        expect(mockRest).not.toHaveBeenCalled();
     });
 });

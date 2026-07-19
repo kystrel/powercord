@@ -1,4 +1,5 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
+import { ChatInputCommandInteraction } from 'discord.js';
+import { pingCommandDefinition } from '../../command-definitions';
 import {
     elapsedMs,
     errorLogFields,
@@ -7,9 +8,7 @@ import {
 import logger from '../../logging/logger';
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('ping')
-        .setDescription('Replies with Pong!'),
+    data: pingCommandDefinition,
     async execute(interaction: ChatInputCommandInteraction) {
         const startedAt = Date.now();
         const logContext = interactionLocation(interaction);

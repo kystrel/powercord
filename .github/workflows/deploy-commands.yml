@@ -5,18 +5,18 @@ on:
     push:
         branches: [master]
         paths:
-            - 'bot/src/commands/**'
+            - 'bot/src/command-definitions.ts'
             - 'bot/scripts/deploy-commands.ts'
 
 permissions:
     contents: read
 
 concurrency:
-    group: discord-command-deployment
+    group: discord-global-command-deployment
     cancel-in-progress: false
 
 jobs:
-    deploy-commands:
+    deploy-global-commands:
         if: github.ref == 'refs/heads/master'
         runs-on: ubuntu-latest
         timeout-minutes: 10
@@ -38,9 +38,11 @@ jobs:
               with:
                   filter: powercord-bot
 
-            - name: Deploy commands
+            - name: Deploy global commands
               env:
                   CLIENT_ID: ${{ vars.DISCORD_CLIENT_ID }}
+                  # Master owns the main bot's global command registry.
+                  DISCORD_GUILD_ID: ''
                   DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
                   NODE_ENV: production
               run: pnpm --filter powercord-bot run deploy:commands

@@ -1,6 +1,5 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import { REST, Routes } from 'discord.js';
+import { commandDefinitions } from '../src/command-definitions';
 import { errorLogFields } from '../src/logging/fields';
 import logger from '../src/logging/logger';
 import { config } from '../src/utils/config';
@@ -12,35 +11,7 @@ interface DeployCommandsOptions {
 }
 
 function loadCommandPayloads(): unknown[] {
-    const commands: unknown[] = [];
-    const foldersPath = path.join(__dirname, '../src/commands');
-    const commandFolders = fs.readdirSync(foldersPath);
-    const runtimeExtension = path.extname(__filename);
-
-    for (const folder of commandFolders) {
-        const commandsPath = path.join(foldersPath, folder);
-        const commandFiles = fs
-            .readdirSync(commandsPath)
-            .filter((file: string) => file.endsWith(runtimeExtension));
-
-        for (const file of commandFiles) {
-            const filePath = path.join(commandsPath, file);
-            const command = require(filePath);
-            if ('data' in command && 'execute' in command) {
-                commands.push(command.data.toJSON());
-            } else {
-                logger.warn(
-                    {
-                        event: 'discord_commands.invalid_command_file',
-                        filePath,
-                    },
-                    'command file missing required exports',
-                );
-            }
-        }
-    }
-
-    return commands;
+    return commandDefinitions.map((command) => command.toJSON());
 }
 
 export async function deployCommands({
