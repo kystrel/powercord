@@ -10,10 +10,6 @@ interface DeployCommandsOptions {
     guildId?: string;
 }
 
-function loadCommandPayloads(): unknown[] {
-    return commandDefinitions.map((command) => command.toJSON());
-}
-
 export async function deployCommands({
     clientId = config.CLIENT_ID,
     discordToken = config.DISCORD_TOKEN,
@@ -41,7 +37,7 @@ export async function deployCommands({
     const scope = guildId ? 'guild' : 'global';
     let commands: unknown[] = [];
     try {
-        commands = loadCommandPayloads();
+        commands = commandDefinitions.map((command) => command.toJSON());
         const rest = new REST().setToken(discordToken);
 
         logger.info(
