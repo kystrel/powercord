@@ -3,7 +3,7 @@
 exports[`Header > matches the snapshot 1`] = `
 "<header data-v-daaa1507="" class="w-full border-b border-gray-800" role="banner">
   <div data-v-daaa1507="" class="w-full max-w-(--ui-container) mx-auto px-4 sm:px-6 lg:px-8">
-    <div data-v-daaa1507="" class="flex h-16 items-center justify-between"><a href="/" class="focus-visible:outline-primary text-muted hover:text-default transition-colors">
+    <div data-v-daaa1507="" class="flex h-16 items-center justify-between"><a href="/" class="focus-visible:outline-primary text-primary">
         <div data-v-daaa1507="" class="flex items-center gap-2"><img data-v-daaa1507="" src="/app/assets/img/logo.png" class="size-12 shrink-0 rounded-md" alt="PowerCord logo"><span data-v-daaa1507="" class="logo-text text-3xl text-white">PowerCord</span></div>
       </a>
       <!---->
