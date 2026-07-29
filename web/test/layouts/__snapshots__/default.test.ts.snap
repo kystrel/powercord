@@ -4,7 +4,7 @@ exports[`DefaultLayout > matches the snapshot 1`] = `
 "<div class="flex h-screen flex-col justify-between">
   <header data-v-daaa1507="" class="w-full border-b border-gray-800" role="banner">
     <div data-v-daaa1507="" class="w-full max-w-(--ui-container) mx-auto px-4 sm:px-6 lg:px-8">
-      <div data-v-daaa1507="" class="flex h-16 items-center justify-between"><a href="/" class="focus-visible:outline-primary text-primary">
+      <div data-v-daaa1507="" class="flex h-16 items-center justify-between"><a href="/" class="outline-primary/25 focus-visible:outline-3 rounded-md text-primary">
           <div data-v-daaa1507="" class="flex items-center gap-2"><img data-v-daaa1507="" src="/app/assets/img/logo.png" class="size-12 shrink-0 rounded-md" alt="PowerCord logo"><span data-v-daaa1507="" class="logo-text text-3xl text-white">PowerCord</span></div>
         </a>
         <!---->
@@ -12,21 +12,21 @@ exports[`DefaultLayout > matches the snapshot 1`] = `
         <nav data-slot="root" class="relative gap-1.5 [&amp;>div]:min-w-0 items-center justify-between hidden md:block" data-orientation="horizontal" dir="ltr" data-reka-navigation-menu="">
           <div style="position: relative;">
             <ul data-slot="list" class="isolate min-w-0 flex items-center" data-orientation="horizontal">
-              <li data-menu-item="" data-slot="item" class="min-w-0 py-2"><a href="https://trello.com/b/pm9X3ZfI" rel="noopener noreferrer" target="_blank" data-reka-collection-item="" data-slot="link" class="group relative w-full flex items-center gap-1.5 font-medium before:absolute before:z-[-1] before:rounded-md focus:outline-none focus-visible:outline-none dark:focus-visible:outline-none focus-visible:before:ring-inset focus-visible:before:ring-2 focus-visible:before:ring-primary px-2.5 py-1.5 before:inset-x-px before:inset-y-0 text-muted hover:text-highlighted hover:before:bg-elevated/50 transition-colors before:transition-colors data-[state=open]:text-highlighted data-[state=open]:before:bg-elevated/50 text-md">
+              <li data-menu-item="" data-slot="item" class="min-w-0 py-2"><a href="https://trello.com/b/pm9X3ZfI" rel="noopener noreferrer" target="_blank" data-reka-collection-item="" data-slot="link" class="group relative w-full flex items-center gap-1.5 font-medium before:absolute before:z-[-1] before:rounded-md focus:outline-none focus-visible:outline-none focus-visible:before:outline-3 before:outline-primary/25 px-2.5 py-1.5 before:inset-x-px before:inset-y-0 text-muted hover:text-highlighted hover:before:bg-elevated/50 transition-colors before:transition-colors data-[state=open]:text-highlighted data-[state=open]:before:bg-elevated/50 text-md">
                   <!--v-if--><span data-slot="linkLabel" class="truncate">Roadmap<span class="iconify i-lucide:arrow-up-right inline-block size-3 align-top text-dimmed" aria-hidden="true" data-slot="linkLabelExternalIcon"></span></span>
                   <!--v-if-->
                 </a>
                 <!--v-if-->
                 <!--v-if-->
               </li>
-              <li data-menu-item="" data-slot="item" class="min-w-0 py-2"><a href="https://github.com/kystrel/powercord" rel="noopener noreferrer" target="_blank" data-reka-collection-item="" data-slot="link" class="group relative w-full flex items-center gap-1.5 font-medium before:absolute before:z-[-1] before:rounded-md focus:outline-none focus-visible:outline-none dark:focus-visible:outline-none focus-visible:before:ring-inset focus-visible:before:ring-2 focus-visible:before:ring-primary px-2.5 py-1.5 before:inset-x-px before:inset-y-0 text-muted hover:text-highlighted hover:before:bg-elevated/50 transition-colors before:transition-colors data-[state=open]:text-highlighted data-[state=open]:before:bg-elevated/50 text-md">
+              <li data-menu-item="" data-slot="item" class="min-w-0 py-2"><a href="https://github.com/kystrel/powercord" rel="noopener noreferrer" target="_blank" data-reka-collection-item="" data-slot="link" class="group relative w-full flex items-center gap-1.5 font-medium before:absolute before:z-[-1] before:rounded-md focus:outline-none focus-visible:outline-none focus-visible:before:outline-3 before:outline-primary/25 px-2.5 py-1.5 before:inset-x-px before:inset-y-0 text-muted hover:text-highlighted hover:before:bg-elevated/50 transition-colors before:transition-colors data-[state=open]:text-highlighted data-[state=open]:before:bg-elevated/50 text-md">
                   <!--v-if--><span data-slot="linkLabel" class="truncate">Source<span class="iconify i-lucide:arrow-up-right inline-block size-3 align-top text-dimmed" aria-hidden="true" data-slot="linkLabelExternalIcon"></span></span>
                   <!--v-if-->
                 </a>
                 <!--v-if-->
                 <!--v-if-->
               </li>
-              <li data-menu-item="" data-slot="item" class="min-w-0 py-2"><a href="https://discord.gg/MZfchrRah4" rel="noopener noreferrer" target="_blank" data-reka-collection-item="" data-slot="link" class="group relative w-full flex items-center gap-1.5 font-medium before:absolute before:z-[-1] before:rounded-md focus:outline-none focus-visible:outline-none dark:focus-visible:outline-none focus-visible:before:ring-inset focus-visible:before:ring-2 focus-visible:before:ring-primary px-2.5 py-1.5 before:inset-x-px before:inset-y-0 text-muted hover:text-highlighted hover:before:bg-elevated/50 transition-colors before:transition-colors data-[state=open]:text-highlighted data-[state=open]:before:bg-elevated/50 text-md">
+              <li data-menu-item="" data-slot="item" class="min-w-0 py-2"><a href="https://discord.gg/MZfchrRah4" rel="noopener noreferrer" target="_blank" data-reka-collection-item="" data-slot="link" class="group relative w-full flex items-center gap-1.5 font-medium before:absolute before:z-[-1] before:rounded-md focus:outline-none focus-visible:outline-none focus-visible:before:outline-3 before:outline-primary/25 px-2.5 py-1.5 before:inset-x-px before:inset-y-0 text-muted hover:text-highlighted hover:before:bg-elevated/50 transition-colors before:transition-colors data-[state=open]:text-highlighted data-[state=open]:before:bg-elevated/50 text-md">
                   <!--v-if--><span data-slot="linkLabel" class="truncate">Support Server<span class="iconify i-lucide:arrow-up-right inline-block size-3 align-top text-dimmed" aria-hidden="true" data-slot="linkLabelExternalIcon"></span></span>
                   <!--v-if-->
                 </a>
@@ -36,11 +36,11 @@ exports[`DefaultLayout > matches the snapshot 1`] = `
             </ul>
           </div>
           <!--v-if-->
-          <div data-slot="viewportWrapper" class="absolute top-full left-0 flex w-full justify-center">
+          <div data-slot="viewportWrapper" class="absolute top-full start-0 flex w-full justify-center">
             <!--v-if-->
             <!---->
           </div>
-        </nav><!-- Mobile navigation menu --><button data-v-daaa1507="" type="button" aria-haspopup="dialog" aria-expanded="false" data-state="closed" aria-label="Open navigation menu" data-slot="base" class="rounded-md font-medium inline-flex items-center disabled:cursor-not-allowed aria-disabled:cursor-not-allowed disabled:opacity-75 aria-disabled:opacity-75 transition-colors text-base gap-2 ring ring-inset ring-accented text-default bg-elevated hover:bg-accented/75 active:bg-accented/75 disabled:bg-elevated aria-disabled:bg-elevated focus:outline-none focus-visible:ring-2 focus-visible:ring-inverted p-2 md:hidden"><span class="iconify i-lucide:menu shrink-0 size-6" aria-hidden="true" data-slot="leadingIcon"></span>
+        </nav><!-- Mobile navigation menu --><button data-v-daaa1507="" type="button" data-slot="base" aria-haspopup="dialog" aria-expanded="false" data-state="closed" aria-label="Open navigation menu" class="rounded-md font-medium inline-flex items-center disabled:cursor-not-allowed aria-disabled:cursor-not-allowed disabled:opacity-75 aria-disabled:opacity-75 transition-colors text-base gap-2 ring ring-inset ring-accented text-default bg-elevated hover:bg-accented/75 active:bg-accented/75 disabled:bg-elevated aria-disabled:bg-elevated outline-inverted/25 focus-visible:outline-3 focus-visible:ring-inverted p-2 md:hidden"><span class="iconify i-lucide:menu shrink-0 size-6" aria-hidden="true" data-slot="leadingIcon"></span>
           <!--v-if-->
           <!--v-if-->
         </button>
@@ -53,7 +53,7 @@ exports[`DefaultLayout > matches the snapshot 1`] = `
   <footer class="w-full border-t border-gray-800" role="contentinfo">
     <div class="w-full max-w-(--ui-container) mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex h-16 items-center">
-        <p class="text-muted"> Copyright © 2024-2026 | <a href="https://github.com/kystrel/powercord/blob/master/LICENSE" rel="noopener noreferrer" target="_blank" class="focus-visible:outline-primary transition-colors hover:text-primary text-white">AGPLv3</a></p>
+        <p class="text-muted"> Copyright © 2024-2026 | <a href="https://github.com/kystrel/powercord/blob/master/LICENSE" rel="noopener noreferrer" target="_blank" class="outline-primary/25 focus-visible:outline-3 rounded-md transition-colors hover:text-primary text-white">AGPLv3</a></p>
       </div>
     </div>
   </footer>
