@@ -6,10 +6,10 @@
   "scripts": {
     "prebuild": "node scripts/clean-build.mjs",
     "build": "tsc -p tsconfig.build.json",
-    "deploy:commands": "ts-node src/deploy-commands.ts",
+    "deploy:commands": "ts-node scripts/deploy-commands.ts",
     "dev": "NODE_ENV=development nodemon",
     "start": "NODE_ENV=development ts-node --transpile-only src/index.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.scripts.json",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest"

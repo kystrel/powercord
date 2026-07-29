@@ -3,7 +3,6 @@ import path from 'node:path';
 import { Client, Collection } from 'discord.js';
 import { discordClientOptions } from './constants/client';
 import { startApiDataRefresh } from './data/api';
-import { deployCommands } from './deploy-commands';
 import logger from './logging/logger';
 import { Command } from './types/command';
 import { isMockApiEnabled, validateApiConfiguration } from './utils/apiConfig';
@@ -32,8 +31,6 @@ async function initializeBot() {
 
     startHeartbeat();
     startApiDataRefresh();
-
-    await deployCommands();
 
     if (!config.DISCORD_TOKEN) {
         logger.warn(

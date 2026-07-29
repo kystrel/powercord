@@ -3,6 +3,7 @@ declare namespace NodeJS {
         NODE_ENV?: string;
         CLIENT_ID?: string;
         DISCORD_TOKEN?: string;
+        DISCORD_GUILD_ID?: string;
         API_BASE_URL?: string;
         ENABLE_MOCK_API?: string;
         STATIC_BUCKET?: string;

@@ -5,8 +5,8 @@ import {
     ButtonStyle,
     ChatInputCommandInteraction,
     EmbedBuilder,
-    SlashCommandBuilder,
 } from 'discord.js';
+import { meetCommandDefinition } from '../../command-definitions';
 import { getEmbedColor, getEmbedFooter } from '../../constants/embed';
 import { api } from '../../data/api';
 import {
@@ -85,16 +85,7 @@ function compareDots(a: Meet['entries'][0], b: Meet['entries'][0]): number {
 }
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('meet')
-        .setDescription(`Displays meet's top lifters with pagination`)
-        .addStringOption((option) =>
-            option
-                .setName('name')
-                .setDescription('Name of the meet')
-                .setRequired(true)
-                .setAutocomplete(true),
-        ),
+    data: meetCommandDefinition,
     async execute(interaction: ChatInputCommandInteraction) {
         const startedAt = Date.now();
         const logContext = interactionLocation(interaction);

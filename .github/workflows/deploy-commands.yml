@@ -1,0 +1,48 @@
+name: Deploy Discord Commands
+
+on:
+    workflow_dispatch:
+    push:
+        branches: [master]
+        paths:
+            - 'bot/src/command-definitions.ts'
+            - 'bot/scripts/deploy-commands.ts'
+
+permissions:
+    contents: read
+
+concurrency:
+    group: discord-global-command-deployment
+    cancel-in-progress: false
+
+jobs:
+    deploy-global-commands:
+        if: github.ref == 'refs/heads/master'
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        environment: Production
+        steps:
+            - name: Harden runner
+              uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+              with:
+                  # TODO: switch to block once egress endpoints are catalogued
+                  egress-policy: audit
+
+            - name: Check out code
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+              with:
+                  persist-credentials: false
+
+            - name: Set up bot workspace
+              uses: ./.github/actions/setup-pnpm
+              with:
+                  filter: powercord-bot
+
+            - name: Deploy global commands
+              env:
+                  CLIENT_ID: ${{ vars.DISCORD_CLIENT_ID }}
+                  # Master owns the main bot's global command registry.
+                  DISCORD_GUILD_ID: ''
+                  DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+                  NODE_ENV: production
+              run: pnpm --filter powercord-bot run deploy:commands
