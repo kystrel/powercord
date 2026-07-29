@@ -15,21 +15,21 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.1053.0",
-    "discord.js": "14.26.4",
+    "@aws-sdk/client-s3": "3.1096.0",
+    "discord.js": "14.27.0",
     "dotenv": "17.4.2",
     "express": "5.2.1",
-    "pino": "9.14.0",
+    "pino": "10.3.1",
     "tslib": "2.8.1"
   },
   "devDependencies": {
     "@types/express": "5.0.6",
-    "@vitest/coverage-v8": "4.1.6",
-    "eslint": "10.4.0",
+    "@vitest/coverage-v8": "4.1.10",
+    "eslint": "10.8.0",
     "match-sorter": "8.3.0",
     "nodemon": "3.1.14",
     "ts-node": "10.9.2",
     "typescript": "6.0.3",
-    "vitest": "4.1.6"
+    "vitest": "4.1.10"
   }
 }

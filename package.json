@@ -1,7 +1,7 @@
 {
   "name": "powercord",
   "version": "0.0.1",
-  "packageManager": "pnpm@11.1.2",
+  "packageManager": "pnpm@11.17.0",
   "engines": {
     "node": ">=22.0.0",
     "pnpm": ">=11"
@@ -25,16 +25,17 @@
     "clean": "rm -rf node_modules pnpm-lock.yaml bot/node_modules web/node_modules web/.nuxt web/.output web/dist"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "3.3.5",
+    "@eslint/eslintrc": "3.3.6",
     "@eslint/js": "10.0.1",
     "@ianvs/prettier-plugin-sort-imports": "4.7.1",
     "@vue/compiler-sfc": "3.5.40",
-    "concurrently": "9.2.4",
-    "eslint": "10.4.0",
+    "concurrently": "10.0.4",
+    "eslint": "10.8.0",
     "eslint-config-prettier": "10.1.8",
-    "globals": "17.6.0",
-    "prettier": "3.8.3",
-    "prettier-plugin-tailwindcss": "0.8.0",
-    "typescript-eslint": "8.59.4"
+    "globals": "17.8.0",
+    "prettier": "3.9.6",
+    "prettier-plugin-tailwindcss": "0.8.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.65.0"
   }
 }

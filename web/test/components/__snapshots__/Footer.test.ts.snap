@@ -4,7 +4,7 @@ exports[`Footer > matches the snapshot 1`] = `
 "<footer class="w-full border-t border-gray-800" role="contentinfo">
   <div class="w-full max-w-(--ui-container) mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex h-16 items-center">
-      <p class="text-muted"> Copyright © 2024-2026 | <a href="https://github.com/kystrel/powercord/blob/master/LICENSE" rel="noopener noreferrer" target="_blank" class="focus-visible:outline-primary transition-colors hover:text-primary text-white">AGPLv3</a></p>
+      <p class="text-muted"> Copyright © 2024-2026 | <a href="https://github.com/kystrel/powercord/blob/master/LICENSE" rel="noopener noreferrer" target="_blank" class="outline-primary/25 focus-visible:outline-3 rounded-md transition-colors hover:text-primary text-white">AGPLv3</a></p>
     </div>
   </div>
 </footer>"
