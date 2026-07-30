@@ -65,4 +65,4 @@ COPY --from=build --chown=65532:65532 /app/bot/dist ./dist
 USER 65532:65532
 EXPOSE 3000
 ENTRYPOINT ["/usr/local/bin/node"]
-CMD ["dist/index.js"]
+CMD ["--enable-source-maps", "dist/index.js"]
