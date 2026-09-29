@@ -1,15 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as statusCommand from '../../src/commands/utility/status';
-import { autocompleteCache } from '../../src/data/autocompleteCache';
+import { getDataStatus } from '../../src/data/api';
 import logger from '../../src/logging/logger';
 
 vi.mock('discord.js');
 
-vi.mock('../../src/data/autocompleteCache', () => ({
-    autocompleteCache: {
-        getStatus: vi.fn(),
-    },
-}));
+vi.mock('../../src/data/api', () => ({ getDataStatus: vi.fn() }));
 
 vi.mock('../../src/logging/logger', () => ({
     default: {
@@ -46,10 +42,7 @@ describe('Status command', () => {
     beforeEach(() => {
         vi.mocked(logger.info).mockClear();
         vi.mocked(logger.error).mockClear();
-        vi.mocked(autocompleteCache.getStatus).mockReturnValue({
-            source: 'http',
-            configured: false,
-        });
+        vi.mocked(getDataStatus).mockReturnValue(undefined);
     });
 
     it('replies to measure latency then edits reply with embed', async () => {
@@ -73,7 +66,7 @@ describe('Status command', () => {
         expect(embed.description).toContain('ms');
         expect(embed.description).toContain('5 cached servers');
         expect(embed.description).toContain('42 cached users');
-        expect(embed.description).toContain('HTTP fallback');
+        expect(embed.description).toContain('development mock');
         expect(logger.info).toHaveBeenCalledWith(
             expect.objectContaining({
                 cachedServerCount: 5,
@@ -84,11 +77,8 @@ describe('Status command', () => {
     });
 
     it('shows local autocomplete snapshot metadata and counts', async () => {
-        vi.mocked(autocompleteCache.getStatus).mockReturnValue({
-            source: 'local',
-            configured: true,
+        vi.mocked(getDataStatus).mockReturnValue({
             revision: '1234567890abcdef',
-            updatedAt: '2026-05-24T00:00:00.000Z',
             loadedAt: '2026-05-24T01:00:00.000Z',
             lifterCount: 12_345,
             meetCount: 678,
@@ -99,30 +89,11 @@ describe('Status command', () => {
 
         const { embeds } = (interaction.editReply as any).mock.calls[0][0];
         const embed = embeds[0];
-        expect(embed.description).toContain('local cache');
+        expect(embed.description).toContain('local SQLite');
         expect(embed.description).toContain('`1234567890ab`');
-        expect(embed.description).toContain('<t:1779580800:R>');
+        expect(embed.description).toContain('<t:1779584400:R>');
         expect(embed.description).toContain('12,345 lifters');
         expect(embed.description).toContain('678 meets');
-    });
-
-    it('handles an invalid snapshot timestamp without emitting a broken Discord timestamp', async () => {
-        vi.mocked(autocompleteCache.getStatus).mockReturnValue({
-            source: 'local',
-            configured: true,
-            revision: 'rev1',
-            updatedAt: 'invalid',
-            loadedAt: '2026-05-24T01:00:00.000Z',
-            lifterCount: 1,
-            meetCount: 1,
-        });
-        const interaction = makeInteraction();
-
-        await execute(interaction as any);
-
-        const { embeds } = (interaction.editReply as any).mock.calls[0][0];
-        expect(embeds[0].description).toContain('updated at an unknown time');
-        expect(embeds[0].description).not.toContain('<t:NaN:R>');
     });
 
     it('uses the guild cache without fetching every guild', async () => {

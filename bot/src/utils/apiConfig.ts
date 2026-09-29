@@ -15,9 +15,9 @@ export function validateApiConfiguration(): void {
         );
     }
 
-    if (!config.API_BASE_URL && !isMockApiEnabled()) {
+    if (!config.SQLITE_PATH && !isMockApiEnabled()) {
         throw new Error(
-            'API_BASE_URL is required unless development mock mode is enabled',
+            'SQLITE_PATH is required unless development mock mode is enabled',
         );
     }
 }

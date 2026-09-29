@@ -1,9 +1,6 @@
 import { ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { statusCommandDefinition } from '../../command-definitions';
-import {
-    autocompleteCache,
-    AutocompleteCacheStatus,
-} from '../../data/autocompleteCache';
+import { getDataStatus } from '../../data/api';
 import {
     elapsedMs,
     errorLogFields,
@@ -12,20 +9,15 @@ import {
 import logger from '../../logging/logger';
 import { enforceEmbedLimits } from '../../utils/discord';
 
-function formatAutocompleteStatus(status: AutocompleteCacheStatus): string {
-    if (status.source === 'http') {
-        return 'Autocomplete data: **HTTP fallback**';
-    }
+function formatDataStatus(status: ReturnType<typeof getDataStatus>): string {
+    if (!status) return 'Data: **development mock**';
 
-    const updatedAt = Date.parse(status.updatedAt);
-    const updatedLabel = Number.isNaN(updatedAt)
-        ? 'at an unknown time'
-        : `<t:${Math.floor(updatedAt / 1000)}:R>`;
+    const loadedLabel = `<t:${Math.floor(Date.parse(status.loadedAt) / 1000)}:R>`;
     const revision = status.revision.slice(0, 12).replaceAll('`', '');
 
     return (
-        `Autocomplete data: **local cache**\n` +
-        `Snapshot: \`${revision}\`, updated ${updatedLabel}\n` +
+        `Data: **local SQLite**\n` +
+        `Snapshot: \`${revision}\`, loaded ${loadedLabel}\n` +
         `Cached names: **${status.lifterCount.toLocaleString('en-US')} lifters** and **${status.meetCount.toLocaleString('en-US')} meets**`
     );
 }
@@ -51,7 +43,7 @@ module.exports = {
             const client = interaction.client;
             const serverCount = client.guilds.cache.size;
             const userCount = client.users.cache.size;
-            const autocompleteStatus = autocompleteCache.getStatus();
+            const dataStatus = getDataStatus();
 
             const embed = new EmbedBuilder()
                 .setColor('#c62932')
@@ -62,7 +54,7 @@ module.exports = {
                     `Latency is **${latency}**ms\n\n` +
                         `Uptime: **${hours} hours** and **${minutes} minutes**\n` +
                         `I currently have **${serverCount} cached servers** and **${userCount} cached users**\n\n` +
-                        `${formatAutocompleteStatus(autocompleteStatus)}\n\n` +
+                        `${formatDataStatus(dataStatus)}\n\n` +
                         `Credit to [OpenPowerlifting](https://www.openpowerlifting.org/) for data used`,
                 );
             enforceEmbedLimits(embed);
@@ -77,10 +69,9 @@ module.exports = {
                     cachedServerCount: serverCount,
                     cachedUserCount: userCount,
                     uptimeSeconds: Math.floor(uptimeInSeconds),
-                    autocompleteSource: autocompleteStatus.source,
-                    ...(autocompleteStatus.source === 'local' && {
-                        autocompleteRevision: autocompleteStatus.revision,
-                        autocompleteUpdatedAt: autocompleteStatus.updatedAt,
+                    dataSource: dataStatus ? 'sqlite' : 'mock',
+                    ...(dataStatus && {
+                        dataRevision: dataStatus.revision,
                     }),
                     ...logContext,
                     duration_ms: elapsedMs(startedAt),

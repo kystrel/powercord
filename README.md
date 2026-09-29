@@ -44,10 +44,11 @@ This project uses [dotenv](https://github.com/motdotla/dotenv#readme) to manage 
 > [!WARNING]
 > Keep the Discord token to yourself at all costs.
 
-When `STATIC_BUCKET` is configured, the bot loads PowerCord Data autocomplete
-blobs from S3 into memory and answers Discord autocomplete locally. If the cache
-is not ready or a refresh fails before any cache is loaded, the bot falls back to
-the public HTTP autocomplete API configured by `API_BASE_URL`.
+The bot reads the selected PowerCord Data SQLite snapshot at `SQLITE_PATH`.
+It opens the resolved file read-only at startup, checks the schema version, and
+loads autocomplete names into memory. The updater selects a new snapshot and
+restarts the bot when the selection changes. For local Docker Compose, set
+`SQLITE_DIR` to the directory containing `current.sqlite`.
 
 The bot exposes `GET /live` for process liveness and `GET /health` for readiness.
 Readiness returns `200` only while the Discord client is connected and ready;

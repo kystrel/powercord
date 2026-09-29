@@ -1,215 +1,88 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockConfig, mockApiClient, mockMockClient, mockLoadMockClient } =
-    vi.hoisted(() => ({
-        mockConfig: {
-            NODE_ENV: 'test' as string | undefined,
-            API_BASE_URL: undefined as string | undefined,
-            ENABLE_MOCK_API: false,
+const { mockConfig, mockClient, mockMockClient } = vi.hoisted(() => ({
+    mockConfig: {
+        NODE_ENV: 'test' as string | undefined,
+        SQLITE_PATH: '/data/current.sqlite' as string | undefined,
+        ENABLE_MOCK_API: false,
+    },
+    mockClient: {
+        status: {
+            revision: 'revision',
+            loadedAt: '2026-09-28T00:00:00Z',
+            lifterCount: 2,
+            meetCount: 1,
         },
-        mockApiClient: {
-            getLifter: vi.fn(),
-            getMeet: vi.fn(),
-            getTopLifters: vi.fn(),
-            getLifterAutocomplete: vi.fn(),
-            getMeetAutocomplete: vi.fn(),
-        },
-        mockMockClient: {
-            getLifter: vi.fn(),
-            getMeet: vi.fn(),
-            getTopLifters: vi.fn(),
-            getLifterAutocomplete: vi.fn(),
-            getMeetAutocomplete: vi.fn(),
-        },
-        mockLoadMockClient: vi.fn(),
-    }));
-const mockAutocompleteCache = vi.hoisted(() => ({
-    autocompleteCache: {
+        getLifter: vi.fn(),
+        getMeet: vi.fn(),
+        getTopLifters: vi.fn(),
         getLifterAutocomplete: vi.fn(),
         getMeetAutocomplete: vi.fn(),
     },
-    startAutocompleteCache: vi.fn(),
+    mockMockClient: {
+        getLifter: vi.fn(),
+        getMeet: vi.fn(),
+        getTopLifters: vi.fn(),
+        getLifterAutocomplete: vi.fn(),
+        getMeetAutocomplete: vi.fn(),
+    },
 }));
 
+const sqliteConstructor = vi.hoisted(() => vi.fn());
 vi.mock('../../src/utils/config', () => ({ config: mockConfig }));
-vi.mock('../../src/data/apiClient', () => mockApiClient);
-vi.mock('../../src/data/mockApiLoader', () => ({
-    loadMockClient: mockLoadMockClient,
+vi.mock('../../src/data/sqliteClient', () => ({
+    SqliteClient: class {
+        constructor(path: string) {
+            sqliteConstructor(path);
+            Object.assign(this, mockClient);
+        }
+    },
 }));
-vi.mock('../../src/data/autocompleteCache', () => mockAutocompleteCache);
+vi.mock('../../src/data/mockApiLoader', () => ({
+    loadMockClient: () => mockMockClient,
+}));
 
-describe('api', () => {
+describe('data facade', () => {
     beforeEach(() => {
-        vi.clearAllMocks();
         vi.resetModules();
+        vi.clearAllMocks();
         mockConfig.NODE_ENV = 'test';
-        mockConfig.API_BASE_URL = 'http://localhost:3000/api';
+        mockConfig.SQLITE_PATH = '/data/current.sqlite';
         mockConfig.ENABLE_MOCK_API = false;
-        mockLoadMockClient.mockReturnValue(mockMockClient);
     });
 
-    it('routes getLifter to mockClient when ENABLE_MOCK_API is true', async () => {
-        mockConfig.ENABLE_MOCK_API = true;
-        mockConfig.API_BASE_URL = 'http://localhost:3000/api';
+    it('routes production queries through the initialized SQLite client', async () => {
+        const { api, initializeApiData, getDataStatus } =
+            await import('../../src/data/api');
+        initializeApiData();
+        await api.getLifter('Taylor');
+        await api.getMeet('Nationals');
+        await api.getTopLifters();
+        await api.getLifterAutocomplete('Tay', 25);
+        await api.getMeetAutocomplete('Nat', 25);
 
-        const { api } = await import('../../src/data/api');
-        await api.getLifter('test');
-
-        expect(mockMockClient.getLifter).toHaveBeenCalledWith('test');
-        expect(mockApiClient.getLifter).not.toHaveBeenCalled();
-        expect(mockLoadMockClient).toHaveBeenCalledOnce();
-    });
-
-    it('routes getLifter to apiClient when ENABLE_MOCK_API is false', async () => {
-        mockConfig.ENABLE_MOCK_API = false;
-        mockConfig.API_BASE_URL = 'http://localhost:3000/api';
-
-        const { api } = await import('../../src/data/api');
-        await api.getLifter('test');
-
-        expect(mockApiClient.getLifter).toHaveBeenCalledWith('test');
-        expect(mockMockClient.getLifter).not.toHaveBeenCalled();
-        expect(mockLoadMockClient).not.toHaveBeenCalled();
-    });
-
-    it('does not load mockClient when mock mode is requested in production', async () => {
-        mockConfig.NODE_ENV = 'production';
-        mockConfig.ENABLE_MOCK_API = true;
-
-        const { api } = await import('../../src/data/api');
-        await api.getLifter('test');
-
-        expect(mockApiClient.getLifter).toHaveBeenCalledWith('test');
-        expect(mockLoadMockClient).not.toHaveBeenCalled();
-    });
-
-    it('routes getMeet to mockClient when ENABLE_MOCK_API is true', async () => {
-        mockConfig.ENABLE_MOCK_API = true;
-        mockConfig.API_BASE_URL = 'http://localhost:3000/api';
-
-        const { api } = await import('../../src/data/api');
-        await api.getMeet('test meet');
-
-        expect(mockMockClient.getMeet).toHaveBeenCalledWith('test meet');
-        expect(mockApiClient.getMeet).not.toHaveBeenCalled();
-    });
-
-    it('routes getMeet to apiClient when ENABLE_MOCK_API is false', async () => {
-        mockConfig.ENABLE_MOCK_API = false;
-        mockConfig.API_BASE_URL = 'http://localhost:3000/api';
-
-        const { api } = await import('../../src/data/api');
-        await api.getMeet('test meet');
-
-        expect(mockApiClient.getMeet).toHaveBeenCalledWith('test meet');
-        expect(mockMockClient.getMeet).not.toHaveBeenCalled();
-    });
-
-    it('routes getTopLifters to mockClient when ENABLE_MOCK_API is true', async () => {
-        mockConfig.ENABLE_MOCK_API = true;
-        mockConfig.API_BASE_URL = 'http://localhost:3000/api';
-
-        const { api } = await import('../../src/data/api');
-        await api.getTopLifters(2);
-
-        expect(mockMockClient.getTopLifters).toHaveBeenCalledWith(2);
-        expect(mockApiClient.getTopLifters).not.toHaveBeenCalled();
-    });
-
-    it('routes getTopLifters to apiClient when ENABLE_MOCK_API is false', async () => {
-        mockConfig.ENABLE_MOCK_API = false;
-        mockConfig.API_BASE_URL = 'http://localhost:3000/api';
-
-        const { api } = await import('../../src/data/api');
-        await api.getTopLifters(2);
-
-        expect(mockApiClient.getTopLifters).toHaveBeenCalledWith(2);
-        expect(mockMockClient.getTopLifters).not.toHaveBeenCalled();
-    });
-
-    it('routes getLifterAutocomplete to mockClient when ENABLE_MOCK_API is true', async () => {
-        mockConfig.ENABLE_MOCK_API = true;
-        mockConfig.API_BASE_URL = 'http://localhost:3000/api';
-
-        const { api } = await import('../../src/data/api');
-        await api.getLifterAutocomplete('Jane', 5);
-
-        expect(mockMockClient.getLifterAutocomplete).toHaveBeenCalledWith(
-            'Jane',
-            5,
+        expect(sqliteConstructor).toHaveBeenCalledWith('/data/current.sqlite');
+        expect(mockClient.getLifter).toHaveBeenCalledWith('Taylor');
+        expect(mockClient.getMeet).toHaveBeenCalledWith('Nationals');
+        expect(mockClient.getTopLifters).toHaveBeenCalledWith();
+        expect(mockClient.getLifterAutocomplete).toHaveBeenCalledWith(
+            'Tay',
+            25,
         );
-        expect(mockApiClient.getLifterAutocomplete).not.toHaveBeenCalled();
+        expect(mockClient.getMeetAutocomplete).toHaveBeenCalledWith('Nat', 25);
+        expect(getDataStatus()).toEqual(mockClient.status);
     });
 
-    it('routes getLifterAutocomplete through the local cache when ENABLE_MOCK_API is false', async () => {
-        mockConfig.ENABLE_MOCK_API = false;
-        mockConfig.API_BASE_URL = 'http://localhost:3000/api';
-        mockAutocompleteCache.autocompleteCache.getLifterAutocomplete.mockResolvedValue(
-            ['Jane Doe'],
-        );
-
-        const { api } = await import('../../src/data/api');
-        const result = await api.getLifterAutocomplete('Jane', 5);
-
-        expect(result).toEqual(['Jane Doe']);
-        expect(
-            mockAutocompleteCache.autocompleteCache.getLifterAutocomplete,
-        ).toHaveBeenCalledWith('Jane', 5, mockApiClient.getLifterAutocomplete);
-        expect(mockApiClient.getLifterAutocomplete).not.toHaveBeenCalled();
-        expect(mockMockClient.getLifterAutocomplete).not.toHaveBeenCalled();
-    });
-
-    it('routes getMeetAutocomplete to mockClient when ENABLE_MOCK_API is true', async () => {
+    it('keeps development mock mode independent of SQLite', async () => {
         mockConfig.ENABLE_MOCK_API = true;
-        mockConfig.API_BASE_URL = 'http://localhost:3000/api';
+        mockConfig.SQLITE_PATH = undefined;
+        const { api, initializeApiData, getDataStatus } =
+            await import('../../src/data/api');
+        initializeApiData();
+        await api.getLifter('Taylor');
 
-        const { api } = await import('../../src/data/api');
-        await api.getMeetAutocomplete('Labor', 5);
-
-        expect(mockMockClient.getMeetAutocomplete).toHaveBeenCalledWith(
-            'Labor',
-            5,
-        );
-        expect(mockApiClient.getMeetAutocomplete).not.toHaveBeenCalled();
-    });
-
-    it('routes getMeetAutocomplete through the local cache when ENABLE_MOCK_API is false', async () => {
-        mockConfig.ENABLE_MOCK_API = false;
-        mockConfig.API_BASE_URL = 'http://localhost:3000/api';
-        mockAutocompleteCache.autocompleteCache.getMeetAutocomplete.mockResolvedValue(
-            ['2025 USAPL Raw Nationals'],
-        );
-
-        const { api } = await import('../../src/data/api');
-        const result = await api.getMeetAutocomplete('Labor', 5);
-
-        expect(result).toEqual(['2025 USAPL Raw Nationals']);
-        expect(
-            mockAutocompleteCache.autocompleteCache.getMeetAutocomplete,
-        ).toHaveBeenCalledWith('Labor', 5, mockApiClient.getMeetAutocomplete);
-        expect(mockApiClient.getMeetAutocomplete).not.toHaveBeenCalled();
-        expect(mockMockClient.getMeetAutocomplete).not.toHaveBeenCalled();
-    });
-
-    it('starts autocomplete cache refresh for the real API client', async () => {
-        mockConfig.ENABLE_MOCK_API = false;
-        mockConfig.API_BASE_URL = 'http://localhost:3000/api';
-
-        const { startApiDataRefresh } = await import('../../src/data/api');
-        startApiDataRefresh();
-
-        expect(mockAutocompleteCache.startAutocompleteCache).toHaveBeenCalled();
-    });
-
-    it('does not start autocomplete cache refresh for the mock API client', async () => {
-        mockConfig.ENABLE_MOCK_API = true;
-        mockConfig.API_BASE_URL = 'http://localhost:3000/api';
-
-        const { startApiDataRefresh } = await import('../../src/data/api');
-        startApiDataRefresh();
-
-        expect(
-            mockAutocompleteCache.startAutocompleteCache,
-        ).not.toHaveBeenCalled();
+        expect(sqliteConstructor).not.toHaveBeenCalled();
+        expect(mockMockClient.getLifter).toHaveBeenCalledWith('Taylor');
+        expect(getDataStatus()).toBeUndefined();
     });
 });

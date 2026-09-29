@@ -91,8 +91,22 @@ jobs:
               env:
                   IMAGE_TAG: powercord-bot-validate:${{ github.sha }}
               run: |
+                  mkdir -p "$RUNNER_TEMP/powercord-data"
+                  python3 - <<'PY'
+                  import os
+                  import sqlite3
+                  db = sqlite3.connect(os.path.join(os.environ['RUNNER_TEMP'], 'powercord-data', 'current.sqlite'))
+                  db.executescript("""
+                      CREATE TABLE metadata (schema_version INTEGER, source_revision TEXT, lifters INTEGER, meets INTEGER);
+                      CREATE TABLE lifters (name TEXT);
+                      CREATE TABLE meets (meet_date TEXT, federation TEXT, meet_name TEXT);
+                      INSERT INTO metadata VALUES (1, 'validation', 0, 0);
+                  """)
+                  db.close()
+                  PY
                   docker run -d --name bot-validate -p 3000:3000 \
-                    -e API_BASE_URL=http://localhost:3000 "${IMAGE_TAG}"
+                    --mount "type=bind,source=$RUNNER_TEMP/powercord-data,target=/data,readonly" \
+                    -e SQLITE_PATH=/data/current.sqlite "${IMAGE_TAG}"
                   echo "Waiting for liveness endpoint..."
                   for attempt in {1..30}; do
                     echo "Liveness check attempt ${attempt}/30"
