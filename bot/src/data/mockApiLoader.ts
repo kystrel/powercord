@@ -1,5 +1,19 @@
-import type * as MockClient from './mockClient';
+import type { Lifter, Meet, TopLifter } from '../types/types';
 
-export function loadMockClient(): typeof MockClient {
-    return require('./mockClient') as typeof MockClient;
+type MockClient = {
+    getLifter(name: string): Promise<Lifter | undefined>;
+    getMeet(name: string): Promise<Meet | undefined>;
+    getTopLifters(page?: number): Promise<TopLifter[] | undefined>;
+    getLifterAutocomplete(
+        query: string,
+        limit?: number,
+    ): Promise<string[] | undefined>;
+    getMeetAutocomplete(
+        query: string,
+        limit?: number,
+    ): Promise<string[] | undefined>;
+};
+
+export function loadMockClient(): MockClient {
+    return require('./mockClient') as MockClient;
 }

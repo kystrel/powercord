@@ -23,7 +23,7 @@ db = sqlite3.connect(sys.argv[1])
 db.executescript("""
     CREATE TABLE metadata (schema_version INTEGER, source_revision TEXT, lifters INTEGER, meets INTEGER);
     CREATE TABLE lifters (name TEXT);
-    CREATE TABLE meets (meet_date TEXT, federation TEXT, meet_name TEXT);
+    CREATE TABLE meets (meet_id INTEGER PRIMARY KEY, meet_date TEXT, federation TEXT, meet_name TEXT);
     INSERT INTO metadata VALUES (1, 'validation', 0, 0);
 """)
 db.close()
