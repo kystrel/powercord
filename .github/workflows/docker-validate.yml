@@ -75,6 +75,7 @@ jobs:
                   image-ref: powercord-bot-validate:${{ github.sha }}
                   vuln-type: os,library
                   severity: HIGH,CRITICAL
+                  limit-severities-for-sarif: true
                   ignore-unfixed: true
                   format: sarif
                   output: trivy-image.sarif
