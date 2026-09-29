@@ -93,6 +93,7 @@ jobs:
                   scanners: vuln
                   vuln-type: library
                   severity: HIGH,CRITICAL
+                  limit-severities-for-sarif: true
                   ignore-unfixed: true
                   format: sarif
                   output: trivy-fs.sarif

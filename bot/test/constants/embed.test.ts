@@ -6,7 +6,7 @@ vi.mock('../../src/utils/config', () => ({
     config: {
         NODE_ENV: 'test',
         ENABLE_MOCK_API: false,
-        API_BASE_URL: 'http://localhost',
+        SQLITE_PATH: '/data/current.sqlite',
     },
 }));
 
@@ -14,7 +14,7 @@ describe('embed constants', () => {
     afterEach(() => {
         (config as any).NODE_ENV = 'test';
         (config as any).ENABLE_MOCK_API = false;
-        (config as any).API_BASE_URL = 'http://localhost';
+        (config as any).SQLITE_PATH = '/data/current.sqlite';
     });
 
     describe('getEmbedColor', () => {
@@ -24,9 +24,9 @@ describe('embed constants', () => {
     });
 
     describe('getEmbedFooter', () => {
-        it('returns real data text when mock API is disabled and base URL is set', () => {
+        it('returns real data text when mock API is disabled and SQLite path is set', () => {
             (config as any).ENABLE_MOCK_API = false;
-            (config as any).API_BASE_URL = 'http://localhost';
+            (config as any).SQLITE_PATH = '/data/current.sqlite';
             expect(getEmbedFooter()).toBe(
                 'Data retrieved from OpenPowerlifting',
             );
@@ -37,9 +37,9 @@ describe('embed constants', () => {
             expect(getEmbedFooter()).toBe('\u26A0 Mock data being used');
         });
 
-        it('does not enable mock mode when API_BASE_URL is not set', () => {
+        it('does not enable mock mode when SQLITE_PATH is not set', () => {
             (config as any).ENABLE_MOCK_API = false;
-            (config as any).API_BASE_URL = undefined;
+            (config as any).SQLITE_PATH = undefined;
             expect(getEmbedFooter()).toBe(
                 'Data retrieved from OpenPowerlifting',
             );

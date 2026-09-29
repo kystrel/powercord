@@ -13,6 +13,7 @@ on:
             - '.github/workflows/docker-push.yml'
             - '.github/workflows/docker-validate.yml'
             - '.github/actions/**'
+            - '.github/scripts/validate-bot-image.sh'
 
 permissions:
     contents: read
@@ -74,6 +75,7 @@ jobs:
                   image-ref: powercord-bot-validate:${{ github.sha }}
                   vuln-type: os,library
                   severity: HIGH,CRITICAL
+                  limit-severities-for-sarif: true
                   ignore-unfixed: true
                   format: sarif
                   output: trivy-image.sarif
@@ -87,38 +89,7 @@ jobs:
                   sarif_file: trivy-image.sarif
                   category: trivy-image
 
-            - name: Run Docker container
+            - name: Validate bot image
               env:
                   IMAGE_TAG: powercord-bot-validate:${{ github.sha }}
-              run: |
-                  docker run -d --name bot-validate -p 3000:3000 \
-                    -e API_BASE_URL=http://localhost:3000 "${IMAGE_TAG}"
-                  echo "Waiting for liveness endpoint..."
-                  for attempt in {1..30}; do
-                    echo "Liveness check attempt ${attempt}/30"
-                    if curl -sf http://localhost:3000/live > /dev/null; then
-                      echo "Liveness check passed"
-                      break
-                    fi
-                    sleep 2
-                  done
-                  if ! curl -sf http://localhost:3000/live > /dev/null; then
-                    echo "Container did not become live in time" >&2
-                    docker logs --tail 200 bot-validate || true
-                    exit 1
-                  fi
-                  readiness_status="$(curl -sS -o /dev/null -w '%{http_code}' http://localhost:3000/health)"
-                  if [[ "${readiness_status}" != "503" ]]; then
-                    echo "Expected readiness endpoint to return 503, got ${readiness_status}" >&2
-                    docker logs --tail 200 bot-validate || true
-                    exit 1
-                  fi
-                  docker stop bot-validate
-
-            - name: Show logs on fail
-              if: failure()
-              run: docker logs --tail 200 bot-validate || true
-
-            - name: Clean up
-              if: always()
-              run: docker rm -f bot-validate || true
+              run: .github/scripts/validate-bot-image.sh "$IMAGE_TAG"

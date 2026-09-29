@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { Client, Collection } from 'discord.js';
 import { discordClientOptions } from './constants/client';
-import { startApiDataRefresh } from './data/api';
+import { initializeApiData } from './data/api';
 import logger from './logging/logger';
 import { Command } from './types/command';
 import { isMockApiEnabled, validateApiConfiguration } from './utils/apiConfig';
@@ -25,12 +25,12 @@ async function initializeBot() {
     } else {
         logger.info(
             { event: 'api_data.enabled' },
-            'retrieving API data for OPL commands',
+            'reading local SQLite data for OPL commands',
         );
     }
 
+    initializeApiData();
     startHeartbeat();
-    startApiDataRefresh();
 
     if (!config.DISCORD_TOKEN) {
         logger.warn(

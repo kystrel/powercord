@@ -45,7 +45,12 @@ RUN pnpm --filter powercord-bot build
 
 FROM node:24.18.0-bookworm-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d AS runtime
 
-RUN rm -rf /opt/yarn-* \
+# Keep the pinned base image while applying Debian security updates.
+# hadolint ignore=DL3008
+RUN apt-get update \
+    && apt-get install --no-install-recommends --only-upgrade -y libpcre2-8-0 \
+    && rm -rf /var/lib/apt/lists/* \
+    /opt/yarn-* \
     /usr/local/bin/corepack \
     /usr/local/bin/npm \
     /usr/local/bin/npx \
