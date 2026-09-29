@@ -72,7 +72,6 @@ jobs:
         runs-on: ubuntu-latest
         permissions:
             contents: read
-            security-events: write
         steps:
             - name: Harden runner
               uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
@@ -93,16 +92,7 @@ jobs:
                   scanners: vuln
                   vuln-type: library
                   severity: HIGH,CRITICAL
-                  limit-severities-for-sarif: true
                   ignore-unfixed: true
-                  format: sarif
-                  output: trivy-fs.sarif
+                  format: table
                   exit-code: '1'
                   version: v0.70.0
-
-            - name: Upload Trivy filesystem SARIF
-              if: ${{ always() && hashFiles('trivy-fs.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-              uses: github/codeql-action/upload-sarif@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4.36.0
-              with:
-                  sarif_file: trivy-fs.sarif
-                  category: trivy-filesystem
