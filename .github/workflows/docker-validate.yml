@@ -87,52 +87,7 @@ jobs:
                   sarif_file: trivy-image.sarif
                   category: trivy-image
 
-            - name: Run Docker container
+            - name: Validate bot image
               env:
                   IMAGE_TAG: powercord-bot-validate:${{ github.sha }}
-              run: |
-                  mkdir -p "$RUNNER_TEMP/powercord-data"
-                  python3 - <<'PY'
-                  import os
-                  import sqlite3
-                  db = sqlite3.connect(os.path.join(os.environ['RUNNER_TEMP'], 'powercord-data', 'current.sqlite'))
-                  db.executescript("""
-                      CREATE TABLE metadata (schema_version INTEGER, source_revision TEXT, lifters INTEGER, meets INTEGER);
-                      CREATE TABLE lifters (name TEXT);
-                      CREATE TABLE meets (meet_date TEXT, federation TEXT, meet_name TEXT);
-                      INSERT INTO metadata VALUES (1, 'validation', 0, 0);
-                  """)
-                  db.close()
-                  PY
-                  docker run -d --name bot-validate -p 3000:3000 \
-                    --mount "type=bind,source=$RUNNER_TEMP/powercord-data,target=/data,readonly" \
-                    -e SQLITE_PATH=/data/current.sqlite "${IMAGE_TAG}"
-                  echo "Waiting for liveness endpoint..."
-                  for attempt in {1..30}; do
-                    echo "Liveness check attempt ${attempt}/30"
-                    if curl -sf http://localhost:3000/live > /dev/null; then
-                      echo "Liveness check passed"
-                      break
-                    fi
-                    sleep 2
-                  done
-                  if ! curl -sf http://localhost:3000/live > /dev/null; then
-                    echo "Container did not become live in time" >&2
-                    docker logs --tail 200 bot-validate || true
-                    exit 1
-                  fi
-                  readiness_status="$(curl -sS -o /dev/null -w '%{http_code}' http://localhost:3000/health)"
-                  if [[ "${readiness_status}" != "503" ]]; then
-                    echo "Expected readiness endpoint to return 503, got ${readiness_status}" >&2
-                    docker logs --tail 200 bot-validate || true
-                    exit 1
-                  fi
-                  docker stop bot-validate
-
-            - name: Show logs on fail
-              if: failure()
-              run: docker logs --tail 200 bot-validate || true
-
-            - name: Clean up
-              if: always()
-              run: docker rm -f bot-validate || true
+              run: .github/scripts/validate-bot-image.sh "$IMAGE_TAG"
