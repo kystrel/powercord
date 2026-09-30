@@ -6,10 +6,9 @@ services:
         environment:
             - CLIENT_ID=${CLIENT_ID}
             - DISCORD_TOKEN=${DISCORD_TOKEN}
-            - SQLITE_PATH=/data/current.sqlite
+            - API_BASE_URL=${API_BASE_URL:?Set API_BASE_URL to an API URL reachable from this container}
             - ENABLE_MOCK_API=${ENABLE_MOCK_API}
             - BETTERSTACK_HEARTBEAT_URL=${BETTERSTACK_HEARTBEAT_URL}
+        restart: unless-stopped
         ports:
             - 3000:3000
-        volumes:
-            - ${SQLITE_DIR:-./data}:/data:ro

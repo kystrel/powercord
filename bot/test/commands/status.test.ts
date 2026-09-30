@@ -42,7 +42,7 @@ describe('Status command', () => {
     beforeEach(() => {
         vi.mocked(logger.info).mockClear();
         vi.mocked(logger.error).mockClear();
-        vi.mocked(getDataStatus).mockReturnValue(undefined);
+        vi.mocked(getDataStatus).mockResolvedValue(undefined);
     });
 
     it('replies to measure latency then edits reply with embed', async () => {
@@ -76,8 +76,8 @@ describe('Status command', () => {
         );
     });
 
-    it('shows local autocomplete snapshot metadata and counts', async () => {
-        vi.mocked(getDataStatus).mockReturnValue({
+    it('shows API snapshot metadata and counts', async () => {
+        vi.mocked(getDataStatus).mockResolvedValue({
             revision: '1234567890abcdef',
             loadedAt: '2026-05-24T01:00:00.000Z',
             lifterCount: 12_345,
@@ -89,7 +89,7 @@ describe('Status command', () => {
 
         const { embeds } = (interaction.editReply as any).mock.calls[0][0];
         const embed = embeds[0];
-        expect(embed.description).toContain('local SQLite');
+        expect(embed.description).toContain('API');
         expect(embed.description).toContain('`1234567890ab`');
         expect(embed.description).toContain('<t:1779584400:R>');
         expect(embed.description).toContain('12,345 lifters');

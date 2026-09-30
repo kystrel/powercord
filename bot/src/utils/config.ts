@@ -5,7 +5,7 @@ interface Config {
     CLIENT_ID?: string;
     DISCORD_TOKEN?: string;
     DISCORD_GUILD_ID?: string;
-    SQLITE_PATH?: string;
+    API_BASE_URL?: string;
     ENABLE_MOCK_API?: boolean;
     BETTERSTACK_HEARTBEAT_URL?: string;
 }
@@ -15,7 +15,7 @@ export const config: Config = {
     CLIENT_ID: process.env.CLIENT_ID,
     DISCORD_TOKEN: process.env.DISCORD_TOKEN,
     DISCORD_GUILD_ID: process.env.DISCORD_GUILD_ID,
-    SQLITE_PATH: process.env.SQLITE_PATH,
+    API_BASE_URL: process.env.API_BASE_URL,
     ENABLE_MOCK_API: process.env.ENABLE_MOCK_API === 'true',
     BETTERSTACK_HEARTBEAT_URL: process.env.BETTERSTACK_HEARTBEAT_URL,
 };

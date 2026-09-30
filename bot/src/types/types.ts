@@ -1,9 +1,3 @@
-// Documentation on data used
-// https://gitlab.com/openpowerlifting/opl-data/blob/main/docs/data-readme.md
-
-// Largely based on
-// https://gitlab.com/openpowerlifting/opl-data/blob/main/scripts/compile-sqlite
-
 export interface Lifter {
     name: string;
     url: string;

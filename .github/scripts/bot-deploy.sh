@@ -12,16 +12,15 @@ esac
 if [ "$PHASE" = "deploy" ]; then
   INSTANCE_ID="${3:?Usage: bot-deploy.sh <40-char-git-sha> deploy <instance-id>}"
 else
-  INSTANCE_ID=$(aws ec2 describe-instances \
-    --filters "Name=tag:Name,Values=powercord-bot" \
-              "Name=instance-state-name,Values=running" \
+  INSTANCE_ID=$(aws cloudformation describe-stacks \
+    --stack-name PowercordBotStack \
     --region us-east-1 \
-    --query "sort_by(Reservations[].Instances[], &LaunchTime)[-1].InstanceId" \
+    --query "Stacks[0].Outputs[?OutputKey=='BotInstanceId'].OutputValue | [0]" \
     --output text)
 fi
 
-if [ "$INSTANCE_ID" = "None" ] || [ -z "$INSTANCE_ID" ]; then
-  echo "No running powercord-bot instance found. Deploy PowercordBotStack first." >&2
+if [[ ! "$INSTANCE_ID" =~ ^i-([0-9a-f]{8}|[0-9a-f]{17})$ ]]; then
+  echo "PowercordBotStack has no valid BotInstanceId. Deploy the stack first." >&2
   exit 1
 fi
 
@@ -85,7 +84,7 @@ if [ "$PHASE" != "deploy" ]; then
   INIT_CMD_ID=$(aws ssm send-command \
     --instance-ids "$INSTANCE_ID" \
     --document-name "AWS-RunShellScript" \
-    --parameters '{"commands":["cloud-init status --wait; ci_rc=$?; if [ \"$ci_rc\" -ne 0 ] || ! test -f /opt/powercord-start.sh; then echo \"=== /var/log/cloud-init-output.log (last 100 lines) ===\"; tail -100 /var/log/cloud-init-output.log 2>/dev/null || true; fi; test -f /opt/powercord-start.sh || { echo \"Start script missing (cloud-init exit ${ci_rc}) — see log above\" >&2; exit 1; }"]}' \
+    --parameters '{"commands":["cloud-init status --wait; ci_rc=$?; if [ \"$ci_rc\" -ne 0 ] || ! test -f /opt/powercord-start.sh; then echo \"=== /var/log/cloud-init-output.log (last 100 lines) ===\"; tail -100 /var/log/cloud-init-output.log 2>/dev/null || true; echo \"Host initialization failed (cloud-init exit ${ci_rc}) — see log above\" >&2; exit 1; fi"]}' \
     --region us-east-1 \
     --query "Command.CommandId" \
     --output text)

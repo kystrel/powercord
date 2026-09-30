@@ -44,11 +44,17 @@ This project uses [dotenv](https://github.com/motdotla/dotenv#readme) to manage 
 > [!WARNING]
 > Keep the Discord token to yourself at all costs.
 
-The bot reads the selected PowerCord Data SQLite snapshot at `SQLITE_PATH`.
-It opens the resolved file read-only at startup, checks the schema version, and
-loads autocomplete names into memory. The updater selects a new snapshot and
-restarts the bot when the selection changes. For local Docker Compose, set
-`SQLITE_DIR` to the directory containing `current.sqlite`.
+The bot calls the HTTP API configured by `API_BASE_URL` for OpenPowerlifting data
+and autocomplete. The API is deployed separately alongside the bot on the EC2
+Docker host. For local development, point `API_BASE_URL` at a running API, or set
+`NODE_ENV=development` and `ENABLE_MOCK_API=true` to use the bundled fixtures.
+
+The standalone Compose service in `bot/compose.yaml` requires an `API_BASE_URL`
+reachable from its Docker network. Set it explicitly before running
+`docker compose --env-file bot/.env -f bot/compose.yaml up --build -d` from the
+repository root. A URL using `localhost` refers to the bot container itself;
+use the API's container DNS name on a shared network or a reachable API host.
+Compose restarts the bot after a transient startup failure.
 
 The bot exposes `GET /live` for process liveness and `GET /health` for readiness.
 Readiness returns `200` only while the Discord client is connected and ready;

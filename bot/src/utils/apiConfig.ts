@@ -15,9 +15,23 @@ export function validateApiConfiguration(): void {
         );
     }
 
-    if (!config.SQLITE_PATH && !isMockApiEnabled()) {
+    if (isMockApiEnabled()) return;
+    const baseUrl = config.API_BASE_URL;
+    if (!baseUrl) {
         throw new Error(
-            'SQLITE_PATH is required unless development mock mode is enabled',
+            'API_BASE_URL is required unless development mock mode is enabled',
+        );
+    }
+    const url = new URL(baseUrl);
+    if (
+        !['http:', 'https:'].includes(url.protocol) ||
+        url.username ||
+        url.password ||
+        url.search ||
+        url.hash
+    ) {
+        throw new Error(
+            'API_BASE_URL must be an HTTP or HTTPS URL without credentials, query, or fragment',
         );
     }
 }

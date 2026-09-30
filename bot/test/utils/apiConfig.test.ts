@@ -6,7 +6,7 @@ import {
 
 const mockConfig = vi.hoisted(() => ({
     NODE_ENV: 'test' as string | undefined,
-    SQLITE_PATH: '/data/current.sqlite' as string | undefined,
+    API_BASE_URL: 'http://powercord-api:3001' as string | undefined,
     ENABLE_MOCK_API: false,
 }));
 
@@ -15,29 +15,29 @@ vi.mock('../../src/utils/config', () => ({ config: mockConfig }));
 describe('API configuration', () => {
     beforeEach(() => {
         mockConfig.NODE_ENV = 'test';
-        mockConfig.SQLITE_PATH = '/data/current.sqlite';
+        mockConfig.API_BASE_URL = 'http://powercord-api:3001';
         mockConfig.ENABLE_MOCK_API = false;
     });
 
     it('uses mock data only when it is explicitly enabled outside production', () => {
-        mockConfig.SQLITE_PATH = undefined;
+        mockConfig.API_BASE_URL = undefined;
         mockConfig.ENABLE_MOCK_API = true;
 
         expect(isMockApiEnabled()).toBe(true);
         expect(validateApiConfiguration).not.toThrow();
     });
 
-    it('requires SQLITE_PATH when mock mode is disabled', () => {
-        mockConfig.SQLITE_PATH = undefined;
+    it('requires API_BASE_URL when mock mode is disabled', () => {
+        mockConfig.API_BASE_URL = undefined;
 
         expect(() => validateApiConfiguration()).toThrow(
-            'SQLITE_PATH is required unless development mock mode is enabled',
+            'API_BASE_URL is required unless development mock mode is enabled',
         );
     });
 
     it('rejects mock mode in production', () => {
         mockConfig.NODE_ENV = 'production';
-        mockConfig.SQLITE_PATH = undefined;
+        mockConfig.API_BASE_URL = undefined;
         mockConfig.ENABLE_MOCK_API = true;
 
         expect(isMockApiEnabled()).toBe(false);
@@ -48,7 +48,7 @@ describe('API configuration', () => {
 
     it('rejects mock mode when NODE_ENV is not set', () => {
         mockConfig.NODE_ENV = undefined;
-        mockConfig.SQLITE_PATH = undefined;
+        mockConfig.API_BASE_URL = undefined;
         mockConfig.ENABLE_MOCK_API = true;
 
         expect(isMockApiEnabled()).toBe(false);
@@ -57,10 +57,22 @@ describe('API configuration', () => {
         );
     });
 
-    it('accepts a configured SQLite snapshot in production', () => {
+    it('accepts a configured API URL in production', () => {
         mockConfig.NODE_ENV = 'production';
 
         expect(isMockApiEnabled()).toBe(false);
         expect(validateApiConfiguration).not.toThrow();
+    });
+    it('rejects non-HTTP URLs and embedded credentials', () => {
+        for (const url of [
+            'file:///data',
+            'http://user:pass@api:3001',
+            'http://api:3001/?q=x',
+            'http://api:3001/#section',
+            'invalid',
+        ]) {
+            mockConfig.API_BASE_URL = url;
+            expect(validateApiConfiguration).toThrow();
+        }
     });
 });
