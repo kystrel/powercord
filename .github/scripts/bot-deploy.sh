@@ -96,6 +96,4 @@ DEPLOY_CMD_ID=$(aws ssm send-command \
   --region us-east-1 \
   --query "Command.CommandId" \
   --output text)
-# A replacement host rebuilds SQLite before starting the bot. The updater service can run for
-# 30 minutes, so allow 40 minutes for the import and image startup.
 ssm_poll "$DEPLOY_CMD_ID" "deploy" 480
