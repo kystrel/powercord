@@ -95,5 +95,23 @@ jobs:
                   docker push "${ECR_REGISTRY}/${ECR_REPOSITORY}:latest"
                   docker push "${ECR_REGISTRY}/${ECR_REPOSITORY}:${{ github.sha }}"
 
+            - name: Refresh AWS Credentials for host readiness
+              uses: aws-actions/configure-aws-credentials@d979d5b3a71173a29b74b5b88418bfda9437d885
+              with:
+                  role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+                  aws-region: us-east-1
+                  unset-current-credentials: true
+
+            - name: Wait for bot host
+              id: bot-host
+              run: .github/scripts/bot-deploy.sh "${{ github.sha }}" wait
+
+            - name: Refresh AWS Credentials for deployment
+              uses: aws-actions/configure-aws-credentials@d979d5b3a71173a29b74b5b88418bfda9437d885
+              with:
+                  role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+                  aws-region: us-east-1
+                  unset-current-credentials: true
+
             - name: Restart bot on EC2
-              run: .github/scripts/bot-deploy.sh "${{ github.sha }}"
+              run: .github/scripts/bot-deploy.sh "${{ github.sha }}" deploy "${{ steps.bot-host.outputs.instance_id }}"

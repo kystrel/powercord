@@ -2,43 +2,28 @@
 set -euo pipefail
 
 IMAGE_SHA="${1:?Usage: bot-deploy.sh <40-char-git-sha>}"
+PHASE="${2:-all}"
 
-INSTANCE_ID=$(aws ec2 describe-instances \
-  --filters "Name=tag:Name,Values=powercord-bot" \
-            "Name=instance-state-name,Values=running" \
-  --region us-east-1 \
-  --query "sort_by(Reservations[].Instances[], &LaunchTime)[-1].InstanceId" \
-  --output text)
+case "$PHASE" in
+  all|wait|deploy) ;;
+  *) echo "Unknown deployment phase: ${PHASE}" >&2; exit 2 ;;
+esac
+
+if [ "$PHASE" = "deploy" ]; then
+  INSTANCE_ID="${3:?Usage: bot-deploy.sh <40-char-git-sha> deploy <instance-id>}"
+else
+  INSTANCE_ID=$(aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=powercord-bot" \
+              "Name=instance-state-name,Values=running" \
+    --region us-east-1 \
+    --query "sort_by(Reservations[].Instances[], &LaunchTime)[-1].InstanceId" \
+    --output text)
+fi
 
 if [ "$INSTANCE_ID" = "None" ] || [ -z "$INSTANCE_ID" ]; then
   echo "No running powercord-bot instance found. Deploy PowercordBotStack first." >&2
   exit 1
 fi
-
-# ── Wait for SSM agent ────────────────────────────────────────────────────────
-
-echo "Waiting for ${INSTANCE_ID} to become available in SSM..."
-SSM_READY=
-for attempt in {1..60}; do
-  SSM_READY=$(aws ssm describe-instance-information \
-    --filters "Key=InstanceIds,Values=${INSTANCE_ID}" \
-    --region us-east-1 \
-    --query "InstanceInformationList[?PingStatus=='Online'].InstanceId | [0]" \
-    --output text)
-  if [ "$SSM_READY" = "$INSTANCE_ID" ]; then
-    break
-  fi
-  echo "SSM not ready yet (${attempt}/60); retrying..."
-  sleep 10
-done
-if [ "$SSM_READY" != "$INSTANCE_ID" ]; then
-  echo "Instance ${INSTANCE_ID} did not become SSM Online in time." >&2
-  exit 1
-fi
-
-# ── Wait for UserData (cloud-init) ────────────────────────────────────────────
-# SSM agent comes online before cloud-init finishes. Gate on cloud-init
-# completion so the start script is guaranteed to exist before we invoke it.
 
 ssm_poll() {
   local cmd_id="$1" label="$2" max_attempts="${3:-60}"
@@ -76,15 +61,41 @@ ssm_poll() {
   return 1
 }
 
-echo "Waiting for UserData (cloud-init) to complete on ${INSTANCE_ID}..."
-INIT_CMD_ID=$(aws ssm send-command \
-  --instance-ids "$INSTANCE_ID" \
-  --document-name "AWS-RunShellScript" \
-  --parameters '{"commands":["cloud-init status --wait; ci_rc=$?; if [ \"$ci_rc\" -ne 0 ] || ! test -f /opt/powercord-start.sh; then echo \"=== /var/log/cloud-init-output.log (last 100 lines) ===\"; tail -100 /var/log/cloud-init-output.log 2>/dev/null || true; fi; test -f /opt/powercord-start.sh || { echo \"Start script missing (cloud-init exit ${ci_rc}) — see log above\" >&2; exit 1; }"]}' \
-  --region us-east-1 \
-  --query "Command.CommandId" \
-  --output text)
-ssm_poll "$INIT_CMD_ID" "cloud-init" 240
+if [ "$PHASE" != "deploy" ]; then
+  echo "Waiting for ${INSTANCE_ID} to become available in SSM..."
+  SSM_READY=
+  for attempt in {1..60}; do
+    SSM_READY=$(aws ssm describe-instance-information \
+      --filters "Key=InstanceIds,Values=${INSTANCE_ID}" \
+      --region us-east-1 \
+      --query "InstanceInformationList[?PingStatus=='Online'].InstanceId | [0]" \
+      --output text)
+    if [ "$SSM_READY" = "$INSTANCE_ID" ]; then
+      break
+    fi
+    echo "SSM not ready yet (${attempt}/60); retrying..."
+    sleep 10
+  done
+  if [ "$SSM_READY" != "$INSTANCE_ID" ]; then
+    echo "Instance ${INSTANCE_ID} did not become SSM Online in time." >&2
+    exit 1
+  fi
+
+  echo "Waiting for UserData (cloud-init) to complete on ${INSTANCE_ID}..."
+  INIT_CMD_ID=$(aws ssm send-command \
+    --instance-ids "$INSTANCE_ID" \
+    --document-name "AWS-RunShellScript" \
+    --parameters '{"commands":["cloud-init status --wait; ci_rc=$?; if [ \"$ci_rc\" -ne 0 ] || ! test -f /opt/powercord-start.sh; then echo \"=== /var/log/cloud-init-output.log (last 100 lines) ===\"; tail -100 /var/log/cloud-init-output.log 2>/dev/null || true; fi; test -f /opt/powercord-start.sh || { echo \"Start script missing (cloud-init exit ${ci_rc}) — see log above\" >&2; exit 1; }"]}' \
+    --region us-east-1 \
+    --query "Command.CommandId" \
+    --output text)
+  ssm_poll "$INIT_CMD_ID" "cloud-init" 240
+
+  if [ "$PHASE" = "wait" ]; then
+    printf 'instance_id=%s\n' "$INSTANCE_ID" >> "${GITHUB_OUTPUT:?GITHUB_OUTPUT is required for the wait phase}"
+    exit 0
+  fi
+fi
 
 # ── Deploy ────────────────────────────────────────────────────────────────────
 
