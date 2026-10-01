@@ -2,6 +2,7 @@ import type { Lifter, Meet, MeetChoice, TopLifter } from '../types/types';
 import { config } from '../utils/config';
 
 export interface DataStatus {
+    apiVersion?: number;
     revision: string;
     loadedAt: string;
     lifterCount: number;
@@ -76,6 +77,9 @@ export async function checkApiHealth(): Promise<void> {
 
 export async function fetchDataStatus(): Promise<DataStatus> {
     const status = await request<DataStatus>('/api/status');
+    if (status?.apiVersion !== undefined && status.apiVersion !== 1) {
+        throw new Error('Unsupported data API version; expected 1');
+    }
     if (
         !status ||
         typeof status.revision !== 'string' ||

@@ -31,7 +31,7 @@ describe('data facade', () => {
         await getDataStatus();
         expect(health).toHaveBeenCalledOnce();
         expect(mockClient.getLifter).toHaveBeenCalledWith('Taylor');
-        expect(status).toHaveBeenCalledOnce();
+        expect(status).toHaveBeenCalledTimes(2);
     });
     it('keeps explicit development mock mode independent of the API', async () => {
         mockConfig.ENABLE_MOCK_API = true;
