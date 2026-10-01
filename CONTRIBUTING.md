@@ -12,6 +12,30 @@ To get started with repo setup, follow these steps:
 
 3. **Run Project**: Follow setup instructions in [README](README.md).
 
+## Bot Setup
+
+After setting up `bot/.env` and Discord as described in the README, choose how to provide data:
+
+### Mock Data
+
+Set `ENABLE_MOCK_API=true` in `bot/.env`, then run `pnpm dev:bot` from the repo root. This uses local fixtures without a backend. Mock mode only works in development and tests.
+
+### Your Own API
+
+Set `ENABLE_MOCK_API=false` and point `API_BASE_URL` at your backend. See the [Data API docs](docs/API.md) for the routes and response types it needs to provide. Run `pnpm dev:bot` from the repo root.
+
+### Docker
+
+The Compose file runs only the bot, so start your API separately. Set `ENABLE_MOCK_API=false`; the Docker image runs in production mode.
+
+`API_BASE_URL` must be reachable from the bot container. `localhost` points at the container itself. With Docker Desktop, use `http://host.docker.internal:3001` for an API running on your host at port 3001. For an API in another container, put both containers on the same Docker network and use the API's container name and port.
+
+Run from the repo root:
+
+```bash
+docker compose --env-file bot/.env -f bot/compose.yaml up --build -d
+```
+
 ## Project Structure
 
 This repo contains the contents for both the Discord bot and its website.
