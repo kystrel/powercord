@@ -9,7 +9,7 @@ Implement these seven `GET` routes for startup and all bot commands. Return JSON
 | Route                       | Query            | Response                          | Used by             |
 | --------------------------- | ---------------- | --------------------------------- | ------------------- |
 | `/health`                   | None             | `200` with JSON when ready        | Bot startup         |
-| `/api/status`               | None             | `DataStatus`                      | `/status`           |
+| `/api/status`               | None             | `DataStatus`                      | Startup, `/status`  |
 | `/api/lifters`              | `name`           | `Lifter`                          | `/lifter`           |
 | `/api/lifters/autocomplete` | `query`, `limit` | `string[]`                        | Lifter autocomplete |
 | `/api/meets`                | `name`           | `Meet`                            | `/meet`             |
@@ -20,7 +20,9 @@ Return `404` for missing lifters or meets, and `409` for ambiguous typed meet na
 
 ## Response types
 
-The data types are in [types.ts](../bot/src/types/types.ts). The status response uses [DataStatus](../bot/src/data/apiClient.ts). All fields are required, including those that can be `null`. Empty arrays should be `[]`.
+The data types are in [types.ts](../bot/src/types/types.ts). The status response uses [DataStatus](../bot/src/data/apiClient.ts). All fields except `apiVersion` are required, including those that can be `null`. Empty arrays should be `[]`.
+
+Status can include `apiVersion: 1`. Other versions stop bot startup. Older backends can omit it. This version refers to the HTTP contract, not the backend's storage schema.
 
 | Fields                            | Format                                                           |
 | --------------------------------- | ---------------------------------------------------------------- |
@@ -145,6 +147,7 @@ Just some examples on how the responses for each should look.
 
 ```json
 {
+    "apiVersion": 1,
     "revision": "example-revision",
     "loadedAt": "2026-01-10T12:00:00Z",
     "lifterCount": 1,

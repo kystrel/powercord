@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { initializeApiData } from '../../src/data/api';
 import {
     apiClient,
     checkApiHealth,
@@ -108,7 +109,47 @@ describe('HTTP data client', () => {
         expect(timeout).toHaveBeenLastCalledWith(2000);
         timeout.mockRestore();
     });
-    it('validates the status contract before rendering it', async () => {
+    it('accepts version 1 and existing unversioned status responses', async () => {
+        const status = {
+            revision: 'abc',
+            loadedAt: '2026-09-30T00:00:00Z',
+            lifterCount: 2,
+            meetCount: 1,
+        };
+        const fetchMock = vi.fn();
+        vi.stubGlobal('fetch', fetchMock);
+        for (const value of [status, { ...status, apiVersion: 1 }]) {
+            fetchMock.mockResolvedValueOnce(Response.json(value));
+            expect(await fetchDataStatus()).toEqual(value);
+        }
+        for (const apiVersion of [0, 2, -1, 1.5, '1', null, {}, []]) {
+            fetchMock.mockResolvedValueOnce(
+                Response.json({ ...status, apiVersion }),
+            );
+            await expect(fetchDataStatus()).rejects.toThrow(
+                'Unsupported data API version; expected 1',
+            );
+        }
+        fetchMock.mockResolvedValueOnce(Response.json({ apiVersion: 2 }));
+        await expect(fetchDataStatus()).rejects.toThrow(
+            'Unsupported data API version; expected 1',
+        );
+    });
+    it('rejects an incompatible HTTP status response during startup', async () => {
+        const fetchMock = vi
+            .fn()
+            .mockResolvedValueOnce(Response.json({ status: 'ok' }))
+            .mockResolvedValueOnce(Response.json({ apiVersion: 2 }));
+        vi.stubGlobal('fetch', fetchMock);
+        await expect(initializeApiData()).rejects.toThrow(
+            'Unsupported data API version; expected 1',
+        );
+        expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
+            'http://powercord-api:3001/health',
+            'http://powercord-api:3001/api/status',
+        ]);
+    });
+    it('validates the status fields', async () => {
         const status = {
             revision: 'abc',
             loadedAt: '2026-09-30T00:00:00Z',
