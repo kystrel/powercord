@@ -26,11 +26,6 @@
 
 </div>
 
-> [!IMPORTANT]
-> Migration complete and services back online. Database contains incomplete entries until refactor is finished.
->
-> _- Jan 1 '26_
-
 ## 🚀 Setup
 
 Project requires [Node.js](https://nodejs.org/) and [pnpm](https://pnpm.io/installation) to run. After installing Node, it is recommended to use [NVM](https://github.com/nvm-sh/nvm) ([installation guide](https://www.freecodecamp.org/news/node-version-manager-nvm-install-guide/)) to manage Node versions. To set the Node version used by the project, run `nvm use` from root and follow the prompts, especially if that version has not been installed yet.
@@ -44,29 +39,7 @@ This project uses [dotenv](https://github.com/motdotla/dotenv#readme) to manage 
 > [!WARNING]
 > Keep the Discord token to yourself at all costs.
 
-The bot calls the HTTP API configured by `API_BASE_URL` for OpenPowerlifting data
-and autocomplete. The API is deployed separately alongside the bot on the EC2
-Docker host. For local development, point `API_BASE_URL` at a running API, or set
-`NODE_ENV=development` and `ENABLE_MOCK_API=true` to use the bundled fixtures.
-
-Meet autocomplete reads labeled `{name, value}` choices from `/api/meets/choices`. Labels identify
-meets by date and OPL path; the complete path is sent back to `/api/meets?name=` for selection.
-Unique legacy display names remain accepted, and ambiguous typed names ask for an autocomplete
-selection. If the choices endpoint returns 404 before the API rollout, the bot falls back to
-legacy string autocomplete. Other API failures remain errors. Deploy the API first to enable
-path selection. The API owns snapshot compatibility; the bot has no SQLite dependency or data mount.
-
-The standalone Compose service in `bot/compose.yaml` requires an `API_BASE_URL`
-reachable from its Docker network. Set it explicitly before running
-`docker compose --env-file bot/.env -f bot/compose.yaml up --build -d` from the
-repository root. A URL using `localhost` refers to the bot container itself;
-use the API's container DNS name on a shared network or a reachable API host.
-Compose restarts the bot after a transient startup failure.
-
-The bot exposes `GET /live` for process liveness and `GET /health` for readiness.
-Readiness returns `200` only while the Discord client is connected and ready;
-otherwise it returns `503`. Better Stack heartbeats follow the same readiness
-signal so startup or gateway failures are not reported as healthy.
+See the [Data API docs](docs/API.md) for the backend routes and response types.
 
 ### Project
 
