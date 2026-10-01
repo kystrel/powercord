@@ -1,6 +1,6 @@
 import { Meet } from '../../types/types';
 
-export const meetData: Meet[] = [
+export const meetData = [
     {
         name: 'Labors of Strength',
         federation: 'IPF',
@@ -761,4 +761,4 @@ export const meetData: Meet[] = [
             },
         ],
     },
-];
+] satisfies Meet[];

@@ -43,13 +43,13 @@ createServer((req, res) => {
   switch (url.pathname) {
     case '/health': body = { status: 'ok' }; break;
     case '/api/lifters': if (url.searchParams.get('name') === entry.name) body = lifter; break;
-    case '/api/meets': if (url.searchParams.get('name') === '2026 IPF Test') body = meet; break;
+    case '/api/meets': if (url.searchParams.get('name') === 'ipf/2601') body = meet; break;
     case '/api/top': body = top; break;
     case '/api/lifters/autocomplete':
       if (url.searchParams.get('query') === 'Ta' && url.searchParams.get('limit') === '2') body = [entry.name];
       break;
-    case '/api/meets/autocomplete':
-      if (url.searchParams.get('query') === 'Test' && url.searchParams.get('limit') === '2') body = ['2026 IPF Test'];
+    case '/api/meets/choices':
+      if (url.searchParams.get('query') === 'Test' && url.searchParams.get('limit') === '2') body = [{ name: '2026-09-30 [ipf/2601] IPF Test', value: 'ipf/2601' }];
       break;
     case '/api/status': body = { revision: 'fixture', loadedAt: '2026-09-30T00:00:00Z', lifterCount: 1, meetCount: 1 }; break;
   }
@@ -85,12 +85,12 @@ const { apiClient, checkApiHealth, fetchDataStatus } = require('./dist/data/apiC
   assert.equal(lifter.name, 'Taylor #1');
   assert.equal(lifter.meets[0].total, 590);
   assert.equal(lifter.personalBests[0].dots, '520');
-  const meet = await apiClient.getMeet('2026 IPF Test');
+  const meet = await apiClient.getMeet('ipf/2601');
   assert.equal(meet.name, 'Test');
   assert.equal(meet.entries[0].name, lifter.name);
   assert.equal((await apiClient.getTopLifters())[0].dots, 520);
   assert.deepEqual(await apiClient.getLifterAutocomplete('Ta', 2), [lifter.name]);
-  assert.deepEqual(await apiClient.getMeetAutocomplete('Test', 2), ['2026 IPF Test']);
+  assert.deepEqual(await apiClient.getMeetAutocomplete('Test', 2), [{ name: '2026-09-30 [ipf/2601] IPF Test', value: 'ipf/2601' }]);
   assert.deepEqual(await fetchDataStatus(), { revision: 'fixture', loadedAt: '2026-09-30T00:00:00Z', lifterCount: 1, meetCount: 1 });
   assert.equal(await apiClient.getLifter('missing'), undefined);
   assert.equal(await apiClient.getMeet('missing'), undefined);

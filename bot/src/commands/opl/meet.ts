@@ -9,6 +9,7 @@ import {
 import { meetCommandDefinition } from '../../command-definitions';
 import { getEmbedColor, getEmbedFooter } from '../../constants/embed';
 import { api } from '../../data/api';
+import { AmbiguousMeetError } from '../../data/apiClient';
 import {
     elapsedMs,
     errorLogFields,
@@ -25,10 +26,6 @@ import {
 
 const OPL_MEET_PATH_PATTERN =
     /^[A-Za-z0-9][A-Za-z0-9._~-]*(\/[A-Za-z0-9][A-Za-z0-9._~-]*)+$/;
-
-async function fetchMeet(name: string): Promise<Meet | undefined> {
-    return api.getMeet(name);
-}
 
 function getOpenPowerliftingMeetUrl(url: string | null | undefined) {
     if (!url) return undefined;
@@ -111,7 +108,7 @@ module.exports = {
                 return;
             }
 
-            const meet: Meet | undefined = await fetchMeet(name);
+            const meet: Meet | undefined = await api.getMeet(name);
 
             if (!meet || meet.entries.length === 0) {
                 const notFoundMessage = truncateDiscordText(
@@ -339,13 +336,17 @@ module.exports = {
                 },
                 'command failed',
             );
+            const content =
+                error instanceof AmbiguousMeetError
+                    ? error.message
+                    : 'An error occurred while fetching the meet data.';
             if (interaction.deferred || interaction.replied) {
                 await interaction.editReply({
-                    content: 'An error occurred while fetching the meet data.',
+                    content,
                 });
             } else {
                 await interaction.reply({
-                    content: 'An error occurred while fetching the meet data.',
+                    content,
                     ephemeral: true,
                 });
             }
@@ -379,9 +380,9 @@ module.exports = {
                 return;
             }
 
-            const meetNames = await api.getMeetAutocomplete(focusedValue, 25);
+            const meetChoices = await api.getMeetAutocomplete(focusedValue, 25);
 
-            if (!meetNames) {
+            if (!meetChoices) {
                 await interaction.respond([]);
                 logger.info(
                     {
@@ -400,9 +401,9 @@ module.exports = {
                 return;
             }
 
-            const choices = meetNames.map((name: string) => ({
-                name: name,
-                value: name,
+            const choices = meetChoices.map((choice) => ({
+                name: truncateDiscordText(choice.name, 100),
+                value: choice.value,
             }));
 
             await interaction.respond(choices);

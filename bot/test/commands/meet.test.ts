@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as meetCommand from '../../src/commands/opl/meet';
+import { AmbiguousMeetError } from '../../src/data/apiClient';
 import logger from '../../src/logging/logger';
 import {
     createAutocompleteInteraction,
@@ -240,6 +241,22 @@ describe('Meet command', () => {
         expect(interaction.editReply).toHaveBeenCalledWith(
             'You need to specify a meet.',
         );
+    });
+
+    it('asks for an autocomplete selection when a typed name is ambiguous', async () => {
+        mockGetMeet.mockRejectedValue(
+            new AmbiguousMeetError(
+                'Multiple meets match. Select a meet from autocomplete.',
+            ),
+        );
+        const interaction = createChatInputInteraction({
+            name: '2025 IPF Meet',
+            deferred: true,
+        });
+        await execute(interaction);
+        expect(interaction.editReply).toHaveBeenCalledWith({
+            content: 'Multiple meets match. Select a meet from autocomplete.',
+        });
     });
 
     it('replies with not-found message when meet does not exist', async () => {
@@ -502,16 +519,39 @@ describe('Meet command', () => {
 
         it('responds with matching meet names', async () => {
             mockGetMeetAutocomplete.mockResolvedValue([
-                'Labors of Strength',
-                'Labors of Speed',
+                {
+                    name: '2025-06-15 [usapl/2501] Labors of Strength',
+                    value: 'usapl/2501',
+                },
+                { name: 'Labors of Speed', value: 'usapl/2502' },
             ]);
             const interaction = createAutocompleteInteraction('La');
             await autocomplete(interaction);
 
             expect(interaction.respond).toHaveBeenCalledWith([
-                { name: 'Labors of Strength', value: 'Labors of Strength' },
-                { name: 'Labors of Speed', value: 'Labors of Speed' },
+                {
+                    name: '2025-06-15 [usapl/2501] Labors of Strength',
+                    value: 'usapl/2501',
+                },
+                { name: 'Labors of Speed', value: 'usapl/2502' },
             ]);
+        });
+
+        it('truncates the label while preserving the complete selection value', async () => {
+            mockGetMeetAutocomplete.mockResolvedValue([
+                {
+                    name:
+                        '2025-06-15 [usapl/2501] ' +
+                        'Long meet name '.repeat(20),
+                    value: 'usapl/2501',
+                },
+            ]);
+            const interaction = createAutocompleteInteraction('Long');
+            await autocomplete(interaction);
+            const choice = interaction.respond.mock.calls[0][0][0];
+            expect(choice.name.length).toBeLessThanOrEqual(100);
+            expect(choice.name).toContain('[usapl/2501]');
+            expect(choice.value).toBe('usapl/2501');
         });
 
         it('responds with empty array when API returns no results', async () => {

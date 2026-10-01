@@ -1,4 +1,4 @@
-import type { Lifter, Meet, TopLifter } from '../types/types';
+import type { Lifter, Meet, MeetChoice, TopLifter } from '../types/types';
 
 type MockClient = {
     getLifter(name: string): Promise<Lifter | undefined>;
@@ -11,7 +11,7 @@ type MockClient = {
     getMeetAutocomplete(
         query: string,
         limit?: number,
-    ): Promise<string[] | undefined>;
+    ): Promise<MeetChoice[] | undefined>;
 };
 
 export function loadMockClient(): MockClient {

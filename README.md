@@ -49,6 +49,13 @@ and autocomplete. The API is deployed separately alongside the bot on the EC2
 Docker host. For local development, point `API_BASE_URL` at a running API, or set
 `NODE_ENV=development` and `ENABLE_MOCK_API=true` to use the bundled fixtures.
 
+Meet autocomplete reads labeled `{name, value}` choices from `/api/meets/choices`. Labels identify
+meets by date and OPL path; the complete path is sent back to `/api/meets?name=` for selection.
+Unique legacy display names remain accepted, and ambiguous typed names ask for an autocomplete
+selection. If the choices endpoint returns 404 before the API rollout, the bot falls back to
+legacy string autocomplete. Other API failures remain errors. Deploy the API first to enable
+path selection. The API owns snapshot compatibility; the bot has no SQLite dependency or data mount.
+
 The standalone Compose service in `bot/compose.yaml` requires an `API_BASE_URL`
 reachable from its Docker network. Set it explicitly before running
 `docker compose --env-file bot/.env -f bot/compose.yaml up --build -d` from the

@@ -66,3 +66,8 @@ export interface TopLifter {
     total: number | null;
     dots: number;
 }
+
+export interface MeetChoice {
+    name: string;
+    value: string;
+}
