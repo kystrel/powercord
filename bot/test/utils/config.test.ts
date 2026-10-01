@@ -18,9 +18,9 @@ describe('config', () => {
         expect(config.NODE_ENV).toBe('production');
     });
 
-    it('reads SQLITE_PATH from the environment', async () => {
-        process.env.SQLITE_PATH = '/data/current.sqlite';
+    it('reads API_BASE_URL from the environment', async () => {
+        process.env.API_BASE_URL = 'http://powercord-api:3001';
         const { config } = await import('../../src/utils/config');
-        expect(config.SQLITE_PATH).toBe('/data/current.sqlite');
+        expect(config.API_BASE_URL).toBe('http://powercord-api:3001');
     });
 });

@@ -25,11 +25,11 @@ async function initializeBot() {
     } else {
         logger.info(
             { event: 'api_data.enabled' },
-            'reading local SQLite data for OPL commands',
+            'reading API data for OPL commands',
         );
     }
 
-    initializeApiData();
+    await initializeApiData();
     startHeartbeat();
 
     if (!config.DISCORD_TOKEN) {

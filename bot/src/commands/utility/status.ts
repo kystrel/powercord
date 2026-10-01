@@ -9,14 +9,16 @@ import {
 import logger from '../../logging/logger';
 import { enforceEmbedLimits } from '../../utils/discord';
 
-function formatDataStatus(status: ReturnType<typeof getDataStatus>): string {
+function formatDataStatus(
+    status: Awaited<ReturnType<typeof getDataStatus>>,
+): string {
     if (!status) return 'Data: **development mock**';
 
     const loadedLabel = `<t:${Math.floor(Date.parse(status.loadedAt) / 1000)}:R>`;
     const revision = status.revision.slice(0, 12).replaceAll('`', '');
 
     return (
-        `Data: **local SQLite**\n` +
+        `Data: **API**\n` +
         `Snapshot: \`${revision}\`, loaded ${loadedLabel}\n` +
         `Cached names: **${status.lifterCount.toLocaleString('en-US')} lifters** and **${status.meetCount.toLocaleString('en-US')} meets**`
     );
@@ -43,7 +45,7 @@ module.exports = {
             const client = interaction.client;
             const serverCount = client.guilds.cache.size;
             const userCount = client.users.cache.size;
-            const dataStatus = getDataStatus();
+            const dataStatus = await getDataStatus();
 
             const embed = new EmbedBuilder()
                 .setColor('#c62932')
@@ -69,7 +71,7 @@ module.exports = {
                     cachedServerCount: serverCount,
                     cachedUserCount: userCount,
                     uptimeSeconds: Math.floor(uptimeInSeconds),
-                    dataSource: dataStatus ? 'sqlite' : 'mock',
+                    dataSource: dataStatus ? 'api' : 'mock',
                     ...(dataStatus && {
                         dataRevision: dataStatus.revision,
                     }),
