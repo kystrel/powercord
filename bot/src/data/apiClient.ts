@@ -1,4 +1,4 @@
-import type { Lifter, Meet, TopLifter } from '../types/types';
+import type { Lifter, Meet, MeetChoice, TopLifter } from '../types/types';
 import { config } from '../utils/config';
 
 export interface DataStatus {
@@ -7,6 +7,8 @@ export interface DataStatus {
     lifterCount: number;
     meetCount: number;
 }
+
+export class AmbiguousMeetError extends Error {}
 
 async function request<T>(
     route: string,
@@ -27,6 +29,11 @@ async function request<T>(
     });
     if (!response.ok) {
         await response.body?.cancel();
+        if (response.status === 409 && route === '/api/meets') {
+            throw new AmbiguousMeetError(
+                'Multiple meets match. Select a meet from autocomplete.',
+            );
+        }
         if (response.status === 404 && allowMissing) return undefined;
         throw new Error(`Data API request failed (${response.status})`);
     }
@@ -45,13 +52,22 @@ export const apiClient = {
             false,
             2000,
         ),
-    getMeetAutocomplete: (query: string, limit = 10) =>
-        request<string[]>(
+    getMeetAutocomplete: async (query: string, limit = 10) => {
+        const choices = await request<MeetChoice[]>(
+            '/api/meets/choices',
+            { query, limit },
+            true,
+            2000,
+        );
+        if (choices !== undefined) return choices;
+        const names = await request<string[]>(
             '/api/meets/autocomplete',
             { query, limit },
             false,
             2000,
-        ),
+        );
+        return names?.map((name) => ({ name, value: name }));
+    },
 };
 
 export async function checkApiHealth(): Promise<void> {

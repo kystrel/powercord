@@ -6,15 +6,13 @@ vi.mock('../../src/utils/config', () => ({
     config: {
         NODE_ENV: 'test',
         ENABLE_MOCK_API: false,
-        SQLITE_PATH: '/data/current.sqlite',
     },
 }));
 
 describe('embed constants', () => {
     afterEach(() => {
-        (config as any).NODE_ENV = 'test';
-        (config as any).ENABLE_MOCK_API = false;
-        (config as any).SQLITE_PATH = '/data/current.sqlite';
+        config.NODE_ENV = 'test';
+        config.ENABLE_MOCK_API = false;
     });
 
     describe('getEmbedColor', () => {
@@ -24,30 +22,21 @@ describe('embed constants', () => {
     });
 
     describe('getEmbedFooter', () => {
-        it('returns real data text when mock API is disabled and SQLite path is set', () => {
-            (config as any).ENABLE_MOCK_API = false;
-            (config as any).SQLITE_PATH = '/data/current.sqlite';
+        it('returns real data text when mock API is disabled', () => {
+            config.ENABLE_MOCK_API = false;
             expect(getEmbedFooter()).toBe(
                 'Data retrieved from OpenPowerlifting',
             );
         });
 
         it('returns mock warning when ENABLE_MOCK_API is true', () => {
-            (config as any).ENABLE_MOCK_API = true;
+            config.ENABLE_MOCK_API = true;
             expect(getEmbedFooter()).toBe('\u26A0 Mock data being used');
         });
 
-        it('does not enable mock mode when SQLITE_PATH is not set', () => {
-            (config as any).ENABLE_MOCK_API = false;
-            (config as any).SQLITE_PATH = undefined;
-            expect(getEmbedFooter()).toBe(
-                'Data retrieved from OpenPowerlifting',
-            );
-        });
-
         it('does not show mock data in production', () => {
-            (config as any).NODE_ENV = 'production';
-            (config as any).ENABLE_MOCK_API = true;
+            config.NODE_ENV = 'production';
+            config.ENABLE_MOCK_API = true;
             expect(getEmbedFooter()).toBe(
                 'Data retrieved from OpenPowerlifting',
             );

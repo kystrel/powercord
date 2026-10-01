@@ -32,14 +32,16 @@ describe('mockClient', () => {
 
     describe('getMeet', () => {
         it('returns the meet with an exact match', async () => {
-            const result = await getMeet('Labors of Strength');
+            const result = await getMeet(
+                'ipf/GRC-2025-06-15-labors-of-strength',
+            );
             expect(result).toEqual(
                 meetData.find((m) => m.name === 'Labors of Strength'),
             );
         });
 
-        it('returns the closest matching meet with fuzzy search', async () => {
-            const result = await getMeet('Labor of Strength');
+        it('accepts a unique legacy name', async () => {
+            const result = await getMeet(' 2025 ipf labors of strength ');
             expect(result?.name).toBe('Labors of Strength');
         });
 
@@ -72,9 +74,47 @@ describe('mockClient', () => {
     });
 
     describe('getMeetAutocomplete', () => {
+        it('keeps same-name meets selectable and rejects ambiguous legacy names', async () => {
+            const original = meetData[0];
+            const other = {
+                ...original,
+                date: '2025-06-16',
+                url: 'https://www.openpowerlifting.org/m/ipf/2502',
+            };
+            meetData.push(other);
+            try {
+                const choices = await getMeetAutocomplete(
+                    '2025 IPF Labors of Strength',
+                );
+                expect(choices).toHaveLength(2);
+                expect(choices?.map((choice) => choice.value)).toContain(
+                    'ipf/2502',
+                );
+                expect(await getMeet('ipf/2502')).toEqual(other);
+                expect(await getMeetAutocomplete('2025-06-16', 1)).toEqual([
+                    {
+                        name: '2025-06-16 [ipf/2502] IPF Labors of Strength',
+                        value: 'ipf/2502',
+                    },
+                ]);
+                expect(
+                    await getMeet('ipf/GRC-2025-06-15-labors-of-strength'),
+                ).toEqual(original);
+                await expect(
+                    getMeet('2025 IPF Labors of Strength'),
+                ).rejects.toThrow('Select a meet from autocomplete');
+                expect(await getMeet('Labor of Strength')).toBeUndefined();
+            } finally {
+                meetData.pop();
+            }
+        });
+
         it('returns matching meet names for a query', async () => {
             const result = await getMeetAutocomplete('Labor');
-            expect(result).toContain('Labors of Strength');
+            expect(result).toContainEqual({
+                name: '2025-06-15 [ipf/GRC-2025-06-15-labors-of-strength] IPF Labors of Strength',
+                value: 'ipf/GRC-2025-06-15-labors-of-strength',
+            });
         });
 
         it('respects the limit parameter', async () => {

@@ -27,7 +27,7 @@ describe('HTTP data client', () => {
             'http://powercord-api:3001/api/meets?name=2026+F%C3%89D+Meet',
             'http://powercord-api:3001/api/top',
             'http://powercord-api:3001/api/lifters/autocomplete?query=a%26b&limit=25',
-            'http://powercord-api:3001/api/meets/autocomplete?query=meet&limit=10',
+            'http://powercord-api:3001/api/meets/choices?query=meet&limit=10',
             'http://powercord-api:3001/health',
         ]);
         expect(fetchMock.mock.calls[0][1]).toMatchObject({
@@ -66,6 +66,40 @@ describe('HTTP data client', () => {
             'Timed out',
         );
         await expect(apiClient.getTopLifters()).rejects.toThrow();
+    });
+    it('keeps authoritative path selections and reports ambiguous names', async () => {
+        const fetchMock = vi
+            .fn()
+            .mockResolvedValueOnce(Response.json({ name: 'Meet' }))
+            .mockResolvedValueOnce(new Response('{}', { status: 409 }));
+        vi.stubGlobal('fetch', fetchMock);
+        expect(await apiClient.getMeet('mags/bp/BP-2005-05-07-C')).toEqual({
+            name: 'Meet',
+        });
+        expect(String(fetchMock.mock.calls[0][0])).toContain(
+            'name=mags%2Fbp%2FBP-2005-05-07-C',
+        );
+        await expect(apiClient.getMeet('2025 IPF Meet')).rejects.toThrow(
+            'Select a meet from autocomplete',
+        );
+    });
+    it('falls back to legacy choices only when the new endpoint is absent', async () => {
+        const fetchMock = vi
+            .fn()
+            .mockResolvedValueOnce(new Response('{}', { status: 404 }))
+            .mockResolvedValueOnce(Response.json(['2025 IPF Meet']))
+            .mockResolvedValueOnce(new Response('{}', { status: 503 }));
+        vi.stubGlobal('fetch', fetchMock);
+        expect(await apiClient.getMeetAutocomplete('Meet', 2)).toEqual([
+            { name: '2025 IPF Meet', value: '2025 IPF Meet' },
+        ]);
+        expect(String(fetchMock.mock.calls[1][0])).toBe(
+            'http://powercord-api:3001/api/meets/autocomplete?query=Meet&limit=2',
+        );
+        await expect(apiClient.getMeetAutocomplete('Meet')).rejects.toThrow(
+            '503',
+        );
+        expect(fetchMock).toHaveBeenCalledTimes(3);
     });
     it('uses a shorter timeout for autocomplete', async () => {
         const timeout = vi.spyOn(AbortSignal, 'timeout');
