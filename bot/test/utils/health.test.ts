@@ -1,105 +1,67 @@
-import express from 'express';
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import logger from '../../src/logging/logger';
-import { isBotReady } from '../../src/utils/botState';
+import type { Server } from 'node:http';
+import { afterEach, describe, expect, it } from 'vitest';
+import { setDiscordClient } from '../../src/utils/botState';
+import { startHealthServer } from '../../src/utils/health';
 
-vi.mock('express', () => ({
-    default: vi.fn(() => ({
-        get: vi.fn(),
-        listen: vi.fn((port: number, callback: () => void) => {
-            callback();
-            return { close: vi.fn() };
-        }),
-    })),
-}));
+const servers: Server[] = [];
 
-vi.mock('../../src/logging/logger', () => ({
-    default: {
-        info: vi.fn(),
-    },
-}));
+afterEach(async () => {
+    setDiscordClient(undefined);
+    await Promise.all(
+        servers
+            .splice(0)
+            .map(
+                (server) =>
+                    new Promise<void>((resolve) =>
+                        server.close(() => resolve()),
+                    ),
+            ),
+    );
+});
 
-vi.mock('../../src/utils/botState', () => ({
-    isBotReady: vi.fn(),
-}));
-
-describe('health', () => {
-    let mockApp: {
-        get: ReturnType<typeof vi.fn>;
-        listen: ReturnType<typeof vi.fn>;
+async function listen() {
+    const server = await startHealthServer(0);
+    servers.push(server);
+    const address = server.address();
+    if (!address || typeof address === 'string')
+        throw new Error('Expected TCP listener');
+    return {
+        server,
+        url: `http://127.0.0.1:${address.port}`,
+        port: address.port,
     };
+}
 
-    beforeAll(async () => {
-        mockApp = {
-            get: vi.fn(),
-            listen: vi.fn((port: number, callback: () => void) => {
-                callback();
-                return { close: vi.fn() };
-            }),
-        };
-        (express as any).mockReturnValue(mockApp);
-        await import('../../src/utils/health');
+describe('health server', () => {
+    it('reports liveness and Discord readiness over HTTP', async () => {
+        const { url } = await listen();
+        const live = await fetch(`${url}/live`);
+        expect(live.status).toBe(200);
+        expect(await live.json()).toEqual({ status: 'ok' });
+        expect(live.headers.has('x-powered-by')).toBe(false);
+        const pending = await fetch(`${url}/health`);
+        expect(pending.status).toBe(503);
+        expect(await pending.json()).toEqual({ status: 'not_ready' });
+        setDiscordClient({ isReady: () => true });
+        const ready = await fetch(`${url}/health`);
+        expect(ready.status).toBe(200);
+        expect(await ready.json()).toEqual({ status: 'ok' });
+        setDiscordClient(undefined);
+        expect((await fetch(`${url}/health`)).status).toBe(503);
     });
 
-    beforeEach(() => {
-        vi.mocked(isBotReady).mockReturnValue(false);
+    it('rejects an occupied port', async () => {
+        const { port } = await listen();
+        await expect(startHealthServer(port)).rejects.toMatchObject({
+            code: 'EADDRINUSE',
+        });
     });
 
-    it('registers GET /live route', () => {
-        expect(mockApp.get).toHaveBeenCalledWith('/live', expect.any(Function));
-    });
-
-    it('GET /live handler always reports liveness', () => {
-        const handler = (mockApp.get.mock.calls as any[]).find(
-            ([path]) => path === '/live',
-        )?.[1];
-        const res = { send: vi.fn() };
-
-        handler({}, res);
-
-        expect(res.send).toHaveBeenCalledWith({ status: 'ok' });
-    });
-
-    it('registers GET /health route', () => {
-        expect(mockApp.get).toHaveBeenCalledWith(
-            '/health',
-            expect.any(Function),
-        );
-    });
-
-    it('GET /health handler reports ready when Discord is connected', () => {
-        vi.mocked(isBotReady).mockReturnValue(true);
-        const handler = (mockApp.get.mock.calls as any[]).find(
-            ([path]) => path === '/health',
-        )?.[1];
-        const res = { send: vi.fn() };
-
-        handler({}, res);
-
-        expect(res.send).toHaveBeenCalledWith({ status: 'ok' });
-    });
-
-    it('GET /health handler returns 503 until Discord is connected', () => {
-        const handler = (mockApp.get.mock.calls as any[]).find(
-            ([path]) => path === '/health',
-        )?.[1];
-        const send = vi.fn();
-        const status = vi.fn(() => ({ send }));
-
-        handler({}, { status });
-
-        expect(status).toHaveBeenCalledWith(503);
-        expect(send).toHaveBeenCalledWith({ status: 'not_ready' });
-    });
-
-    it('listens on port 3000', () => {
-        expect(mockApp.listen).toHaveBeenCalledWith(3000, expect.any(Function));
-    });
-
-    it('logs startup message', () => {
-        expect(logger.info).toHaveBeenCalledWith(
-            { event: 'health_server.started', port: 3000 },
-            'health check server started',
-        );
+    it('releases the listener on close', async () => {
+        const { server, port } = await listen();
+        await new Promise<void>((resolve) => server.close(() => resolve()));
+        servers.splice(servers.indexOf(server), 1);
+        const replacement = await startHealthServer(port);
+        servers.push(replacement);
     });
 });
