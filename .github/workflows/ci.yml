@@ -4,36 +4,8 @@ on:
     workflow_dispatch:
     push:
         branches: [master]
-        paths:
-            - '.github/actions/setup-pnpm/**'
-            - '.github/workflows/ci.yml'
-            - '.npmrc'
-            - '.nvmrc'
-            - '.prettierignore'
-            - '.prettierrc'
-            - 'bot/**'
-            - 'codecov.yml'
-            - 'eslint.config.mjs'
-            - 'package.json'
-            - 'pnpm-lock.yaml'
-            - 'pnpm-workspace.yaml'
-            - 'web/**'
     pull_request:
         branches: [master]
-        paths:
-            - '.github/actions/setup-pnpm/**'
-            - '.github/workflows/ci.yml'
-            - '.npmrc'
-            - '.nvmrc'
-            - '.prettierignore'
-            - '.prettierrc'
-            - 'bot/**'
-            - 'codecov.yml'
-            - 'eslint.config.mjs'
-            - 'package.json'
-            - 'pnpm-lock.yaml'
-            - 'pnpm-workspace.yaml'
-            - 'web/**'
 
 permissions:
     contents: read
@@ -43,41 +15,6 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-    check-changes:
-        runs-on: ubuntu-latest
-        outputs:
-            bot: ${{ steps.filter.outputs.bot }}
-            web: ${{ steps.filter.outputs.web }}
-        steps:
-            - name: Harden runner
-              uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
-              with:
-                  # TODO: switch to block once egress endpoints are catalogued
-                  egress-policy: audit
-
-            - name: Check out code
-              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-              with:
-                  persist-credentials: false
-                  fetch-depth: 0
-
-            - name: Detect file changes
-              uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
-              id: filter
-              with:
-                  token: ''
-                  filters: |
-                      bot:
-                          - 'bot/**'
-                          - 'package.json'
-                          - 'pnpm-lock.yaml'
-                          - 'pnpm-workspace.yaml'
-                      web:
-                          - 'web/**'
-                          - 'package.json'
-                          - 'pnpm-lock.yaml'
-                          - 'pnpm-workspace.yaml'
-
     lint-format:
         runs-on: ubuntu-latest
         steps:
@@ -105,8 +42,7 @@ jobs:
               run: pnpm run prettier
 
     bot-test:
-        needs: [check-changes, lint-format]
-        if: needs.check-changes.outputs.bot == 'true'
+        needs: lint-format
         runs-on: ubuntu-latest
         steps:
             - name: Harden runner
@@ -139,8 +75,7 @@ jobs:
                   flags: bot
 
     web-test:
-        needs: [check-changes, lint-format]
-        if: needs.check-changes.outputs.web == 'true'
+        needs: lint-format
         runs-on: ubuntu-latest
         steps:
             - name: Harden runner
@@ -171,3 +106,22 @@ jobs:
                   token: ${{ secrets.CODECOV_TOKEN }}
                   files: ./web/coverage/lcov.info
                   flags: web
+
+    docker:
+        uses: ./.github/workflows/docker-validate.yml
+
+    security:
+        permissions:
+            contents: read
+            security-events: write
+        uses: ./.github/workflows/security.yml
+
+    ci-pass:
+        if: always()
+        needs: [lint-format, bot-test, web-test, docker, security]
+        runs-on: ubuntu-latest
+        steps:
+            - name: Require every check to pass
+              env:
+                  RESULTS: ${{ join(needs.*.result, ',') }}
+              run: test "$RESULTS" = 'success,success,success,success,success'

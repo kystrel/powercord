@@ -3,13 +3,12 @@ coverage:
         project:
             default:
                 target: 80%
-                threshold: 10%
+                threshold: 0%
 
         patch:
             default:
-                informational: true
                 target: 80%
-                threshold: 10%
+                threshold: 0%
 
 flag_management:
     default_rules:

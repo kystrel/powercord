@@ -4,30 +4,7 @@ on:
     workflow_dispatch:
     schedule:
         - cron: '0 6 * * 1'
-    push:
-        branches: [master]
-        paths:
-            - '.dockerignore'
-            - '.github/actions/**'
-            - '.github/workflows/**'
-            - 'bot/Dockerfile'
-            - 'bot/package.json'
-            - 'package.json'
-            - 'pnpm-lock.yaml'
-            - 'pnpm-workspace.yaml'
-            - 'web/package.json'
-    pull_request:
-        branches: [master]
-        paths:
-            - '.dockerignore'
-            - '.github/actions/**'
-            - '.github/workflows/**'
-            - 'bot/Dockerfile'
-            - 'bot/package.json'
-            - 'package.json'
-            - 'pnpm-lock.yaml'
-            - 'pnpm-workspace.yaml'
-            - 'web/package.json'
+    workflow_call:
 
 permissions:
     contents: read
