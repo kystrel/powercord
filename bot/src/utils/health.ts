@@ -16,7 +16,7 @@ export function startHealthServer(port = 3000): Promise<Server> {
         });
     });
     return new Promise((resolve, reject) => {
-        const server = app.listen(port, '0.0.0.0', (error?: Error) => {
+        const server = app.listen(port, (error?: Error) => {
             if (error) {
                 reject(error);
                 return;
