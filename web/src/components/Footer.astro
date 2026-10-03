@@ -1,0 +1,20 @@
+---
+import { site } from '../config/site';
+---
+
+<footer class="bg-base-200">
+    <div class="mx-auto max-w-7xl px-4 py-6 text-sm sm:px-6 lg:px-8">
+        <p class="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <span>Copyright &copy; 2024-{new Date().getFullYear()}</span>
+            <span aria-hidden="true">|</span>
+            <a
+                href={`${site.links.source}/blob/master/LICENSE`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="link"
+            >
+                AGPLv3
+            </a>
+        </p>
+    </div>
+</footer>

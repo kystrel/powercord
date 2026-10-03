@@ -1,0 +1,3 @@
+[build]
+  command = "pnpm --filter powercord-web build"
+  publish = "web/dist"

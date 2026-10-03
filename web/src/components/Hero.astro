@@ -1,0 +1,86 @@
+---
+import { ExternalLink } from '@lucide/astro';
+import { Image } from 'astro:assets';
+import { siDiscord, siGithub } from 'simple-icons';
+import discord from '../assets/discord-logo.svg';
+import showcase from '../assets/preview-showcase.png';
+import { site } from '../config/site';
+---
+
+<section aria-labelledby="hero-title" class="hero">
+    <div class="grid w-full items-center gap-10 md:grid-cols-[minmax(0,4fr)_minmax(0,5fr)]">
+        <div class="space-y-6 text-center md:mb-16 md:text-left">
+            <h1 id="hero-title" class="text-4xl font-bold sm:text-5xl">
+                Powerlifting competition results in
+                <Image
+                    src={discord}
+                    alt="Discord"
+                    class="mx-auto mt-4 h-12 w-auto md:mx-0"
+                />
+            </h1>
+            <p class="text-xl">
+                View powerlifting meet data, lifter profiles, and more!
+            </p>
+            <div class="flex flex-wrap justify-center gap-4 md:justify-start">
+                <a
+                    href={site.links.invite}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn btn-primary btn-lg border-primary ease-linear hover:bg-base-100 hover:text-primary"
+                >
+                    <svg
+                        aria-hidden="true"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                    >
+                        <path d={siDiscord.path} />
+                    </svg>
+                    Add to Discord
+                </a>
+                <a
+                    href={site.links.source}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn btn-outline btn-secondary btn-lg"
+                >
+                    <svg
+                        aria-hidden="true"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                    >
+                        <path d={siGithub.path} />
+                    </svg>
+                    View on GitHub
+                </a>
+            </div>
+            <a
+                href={site.links.data}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="link inline-flex items-center gap-1"
+            >
+                Data provided by OpenPowerlifting
+                <ExternalLink aria-hidden="true" size={16} />
+            </a>
+        </div>
+        <div class="relative max-h-80 overflow-hidden md:max-h-120">
+            <Image
+                src={showcase}
+                widths={[480, 720, 960, 1422]}
+                sizes="(min-width: 1280px) 654px, (min-width: 768px) 56vw, 100vw"
+                alt="PowerCord meet results, lifter profiles, and top totals in Discord"
+                loading="eager"
+                fetchpriority="high"
+                class="h-full max-h-240 w-full object-cover"
+            />
+            <div
+                aria-hidden="true"
+                class="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-base-100 to-transparent"
+            ></div>
+        </div>
+    </div>
+</section>

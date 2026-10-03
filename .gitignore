@@ -24,6 +24,7 @@ sqlite/
 .output
 .data
 .nuxt
+.astro
 .nitro
 .cache
 coverage
