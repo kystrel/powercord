@@ -1,5 +1,6 @@
 ---
 import { CloudDownload, Code, Heart, Zap } from '@lucide/astro';
+import { site } from '../config/site';
 
 const features = [
     {
@@ -22,20 +23,35 @@ const features = [
     },
     {
         title: 'Support Available',
-        description:
-            'Join our support server for help on usage or hosting. Feedback also welcome!',
+        description: 'for help on usage or hosting. Feedback also welcome!',
         icon: Heart,
+        support: true,
     },
 ];
 ---
 
 <section aria-label="Features" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-    {features.map(({ title, description, icon: Icon }) => (
+    {features.map(({ title, description, icon: Icon, support }) => (
         <article class="card bg-base-200">
             <div class="card-body">
                 <Icon aria-hidden="true" size={28} class="text-primary" />
                 <h2 class="card-title">{title}</h2>
-                <p>{description}</p>
+                <p>
+                    {support && (
+                        <>
+                            Join our{' '}
+                            <a
+                                href={site.links.support}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="link"
+                            >
+                                support server
+                            </a>{' '}
+                        </>
+                    )}
+                    {description}
+                </p>
             </div>
         </article>
     ))}

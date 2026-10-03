@@ -8,5 +8,6 @@ export const site = {
         invite: 'https://discord.com/oauth2/authorize?client_id=1306740469484486697&permissions=0&scope=bot%20applications.commands',
         source: 'https://github.com/kystrel/powercord',
         data: 'https://www.openpowerlifting.org/',
+        support: 'https://discord.com/invite/MZfchrRah4',
     },
 };
