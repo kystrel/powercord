@@ -1,7 +1,8 @@
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 function check(
@@ -31,7 +32,14 @@ process.exit(Number(process.env.WATCH_STATUS));
     try {
         const result = spawnSync(
             'bash',
-            [resolve('../.github/scripts/require-ci.sh')],
+            [
+                fileURLToPath(
+                    new URL(
+                        '../../../.github/scripts/require-ci.sh',
+                        import.meta.url,
+                    ),
+                ),
+            ],
             {
                 encoding: 'utf8',
                 env: {
@@ -88,6 +96,8 @@ describe('deployment CI gate', () => {
             '--repo',
             'kystrel/powercord',
             '--exit-status',
+            '--interval',
+            '30',
         ]);
     });
     it('blocks deployment when CI fails or is cancelled', () => {

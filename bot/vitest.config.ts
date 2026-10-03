@@ -6,11 +6,7 @@ export default defineConfig({
         coverage: {
             provider: 'v8',
             include: ['src/**/*.ts'],
-            exclude: [
-                'src/types/**',
-                'src/data/mock/**',
-                'src/data/mockClient.ts',
-            ],
+            exclude: ['src/types/**', 'src/data/mock/**'],
             thresholds: {
                 lines: 80,
                 statements: 80,

@@ -6,7 +6,7 @@ for ((attempt=0; attempt<60; attempt++)); do
     --commit "$GITHUB_SHA" --branch master --limit 20 --json databaseId,event \
     --jq 'map(select(.event == "push" or .event == "workflow_dispatch")) | .[0].databaseId // empty')
   if [[ -n "$run_id" ]]; then
-    gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status
+    gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status --interval 30
     exit 0
   fi
   sleep 2
