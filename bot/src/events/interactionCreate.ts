@@ -1,9 +1,8 @@
-import { Events, Interaction, MessageFlags } from 'discord.js';
+import { Interaction, MessageFlags } from 'discord.js';
 import { errorLogFields, interactionLocation } from '../logging/fields';
 import logger from '../logging/logger';
 
 export default {
-    name: Events.InteractionCreate,
     async execute(interaction: Interaction) {
         if (interaction.isAutocomplete()) {
             const command = interaction.client.commands.get(

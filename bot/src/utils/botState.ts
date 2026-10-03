@@ -4,7 +4,7 @@ type DiscordClientState = Pick<Client, 'isReady'>;
 
 let discordClient: DiscordClientState | undefined;
 
-export function setDiscordClient(client: DiscordClientState): void {
+export function setDiscordClient(client: DiscordClientState | undefined): void {
     discordClient = client;
 }
 

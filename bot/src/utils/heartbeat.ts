@@ -22,7 +22,7 @@ export function startHeartbeat() {
     );
     sendHeartbeat();
 
-    setInterval(() => {
+    return setInterval(() => {
         sendHeartbeat();
     }, HEARTBEAT_INTERVAL);
 }

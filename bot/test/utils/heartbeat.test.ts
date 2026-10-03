@@ -104,6 +104,16 @@ describe('heartbeat', () => {
         expect(mockFetch).toHaveBeenCalledTimes(3);
     });
 
+    it('stops sending heartbeats when its timer is cleared', async () => {
+        config.BETTERSTACK_HEARTBEAT_URL =
+            'https://heartbeat.betterstack.com/test';
+        mockFetch.mockResolvedValue(new Response(null, { status: 200 }));
+        const timer = startHeartbeat();
+        clearInterval(timer);
+        await vi.advanceTimersByTimeAsync(120000);
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
     it('withholds heartbeats until the bot is ready', () => {
         (config as any).BETTERSTACK_HEARTBEAT_URL =
             'https://heartbeat.betterstack.com/test';
