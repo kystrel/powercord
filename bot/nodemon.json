@@ -1,6 +1,7 @@
 {
     "watch": ["src"],
     "ext": "ts",
+    "pollingInterval": 100,
     "ignore": ["dist"],
     "exec": "ts-node src/index.ts"
 }

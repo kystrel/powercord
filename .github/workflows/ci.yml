@@ -97,6 +97,9 @@ jobs:
             - name: Type-check web
               run: pnpm run typecheck:web
 
+            - name: Install browser for web tests
+              run: pnpm --filter powercord-web exec playwright install --with-deps chromium
+
             - name: Run web tests with coverage
               run: pnpm run test:web:coverage
 

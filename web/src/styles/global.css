@@ -1,0 +1,42 @@
+@import 'tailwindcss';
+
+@plugin 'daisyui' {
+    themes: false;
+}
+
+@plugin 'daisyui/theme' {
+    name: 'powercord';
+    default: true;
+    prefersdark: true;
+    color-scheme: dark;
+
+    --color-base-100: #111111;
+    --color-base-200: #1c1c1c;
+    --color-base-300: #2a2a2a;
+    --color-base-content: #fafafa;
+    --color-primary: #ef4444;
+    --color-primary-content: #111111;
+    --color-secondary: #fafafa;
+    --color-secondary-content: #111111;
+    --color-accent: #f87171;
+    --color-accent-content: #111111;
+    --color-neutral: #2a2a2a;
+    --color-neutral-content: #fafafa;
+    --color-info: #93c5fd;
+    --color-info-content: #111111;
+    --color-success: #86efac;
+    --color-success-content: #111111;
+    --color-warning: #fde047;
+    --color-warning-content: #111111;
+    --color-error: #ef4444;
+    --color-error-content: #111111;
+
+    --radius-selector: 0.5rem;
+    --radius-field: 0.5rem;
+    --radius-box: 0.75rem;
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+    --border: 1px;
+    --depth: 0;
+    --noise: 0;
+}
