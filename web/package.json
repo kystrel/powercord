@@ -13,7 +13,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@lucide/astro": "1.50.0",
+    "@lucide/astro": "1.49.0",
     "@tailwindcss/vite": "4.3.3",
     "astro": "7.3.5",
     "daisyui": "5.7.46",
@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10",
-    "@types/jsdom": "^30.0.0",
+    "@types/jsdom": "30.0.0",
     "@vitest/coverage-v8": "4.1.11",
     "axe-core": "4.13.0",
     "jsdom": "30.0.0",
