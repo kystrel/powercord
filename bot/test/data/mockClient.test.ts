@@ -87,6 +87,10 @@ describe('mockClient', () => {
                     '2025 IPF Labors of Strength',
                 );
                 expect(choices).toHaveLength(2);
+                expect(choices).toContainEqual({
+                    name: '2025-06-15 [ipf/GRC-2025-06-15-labors-of-strength] IPF Labors of Strength',
+                    value: 'ipf/GRC-2025-06-15-labors-of-strength',
+                });
                 expect(choices?.map((choice) => choice.value)).toContain(
                     'ipf/2502',
                 );
@@ -112,10 +116,22 @@ describe('mockClient', () => {
         it('returns matching meet names for a query', async () => {
             const result = await getMeetAutocomplete('Labor');
             expect(result).toContainEqual({
-                name: '2025-06-15 [ipf/GRC-2025-06-15-labors-of-strength] IPF Labors of Strength',
+                name: '2025 IPF Labors of Strength',
                 value: 'ipf/GRC-2025-06-15-labors-of-strength',
             });
         });
+
+        it.each(['2025-06-15', 'ipf/GRC-2025-06-15-labors-of-strength'])(
+            'keeps unique meets searchable by %s',
+            async (query) => {
+                expect(await getMeetAutocomplete(query, 1)).toEqual([
+                    {
+                        name: '2025 IPF Labors of Strength',
+                        value: 'ipf/GRC-2025-06-15-labors-of-strength',
+                    },
+                ]);
+            },
+        );
 
         it('respects the limit parameter', async () => {
             const result = await getMeetAutocomplete('a', 1);

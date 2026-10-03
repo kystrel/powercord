@@ -511,10 +511,6 @@ describe('Meet command', () => {
     describe('autocomplete', () => {
         it.each([
             {
-                name: '2025-10-18 [uspa/3732] USPA Tested Unleash the Beast',
-                value: 'uspa/3732',
-            },
-            {
                 name: '2025 USPA Tested Unleash the Beast',
                 value: 'uspa/3732',
             },
@@ -559,8 +555,14 @@ describe('Meet command', () => {
             await autocomplete(interaction);
 
             expect(interaction.respond).toHaveBeenCalledWith([
-                { name: '2025 IPF Meet', value: 'ipf/2501' },
-                { name: '2025 IPF Meet', value: 'ipf/2502' },
+                {
+                    name: '2025-06-15 [ipf/2501] IPF Meet',
+                    value: 'ipf/2501',
+                },
+                {
+                    name: '2025-06-16 [ipf/2502] IPF Meet',
+                    value: 'ipf/2502',
+                },
             ]);
         });
 
@@ -585,7 +587,7 @@ describe('Meet command', () => {
 
             expect(interaction.respond).toHaveBeenCalledWith([
                 {
-                    name: '2025 Labors of Strength',
+                    name: '2025-06-15 [usapl/2501] Labors of Strength',
                     value: 'usapl/2501',
                 },
                 { name: 'Labors of Speed', value: 'usapl/2502' },
@@ -605,8 +607,7 @@ describe('Meet command', () => {
             await autocomplete(interaction);
             const choice = interaction.respond.mock.calls[0][0][0];
             expect(choice.name.length).toBeLessThanOrEqual(100);
-            expect(choice.name).toMatch(/^2025 Long meet name /);
-            expect(choice.name).not.toContain('[usapl/2501]');
+            expect(choice.name).toContain('[usapl/2501]');
             expect(choice.name.endsWith('…')).toBe(true);
             expect(choice.value).toBe('usapl/2501');
         });

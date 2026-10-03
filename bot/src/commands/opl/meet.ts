@@ -402,13 +402,7 @@ module.exports = {
             }
 
             const choices = meetChoices.map((choice) => ({
-                name: truncateDiscordText(
-                    choice.name.replace(
-                        /^(\d{4})-\d{2}-\d{2} \[[^\]]+\] /,
-                        '$1 ',
-                    ),
-                    100,
-                ),
+                name: truncateDiscordText(choice.name, 100),
                 value: choice.value,
             }));
 

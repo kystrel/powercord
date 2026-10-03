@@ -37,10 +37,10 @@ A lifter's meets should be newest first. The top lifters response should contain
 
 Meet choices use `name` for the label and `value` for the full OPL path:
 
-- `name`: `2026-01-10 [example/123] EXAMPLE Winter Open`
+- `name`: `2026 EXAMPLE Winter Open`
 - `value`: `example/123`
 
-Selecting this choice sends `example/123` to `/api/meets` as the `name` query parameter. Return only that meet and its entries. The date and path in the label distinguish meets with the same name.
+Selecting this choice sends `example/123` to `/api/meets` as the `name` query parameter. Return only that meet and its entries. The API adds the date and path only for duplicate titles, such as `2026-01-10 [example/123] EXAMPLE Winter Open`.
 
 For older backends, a 404 from `/api/meets/choices` makes the client fall back to `/api/meets/autocomplete` with the same query parameters. That route returns `string[]`; each name becomes both the choice label and value. New backends should implement `/api/meets/choices` with full OPL paths.
 
@@ -163,7 +163,7 @@ For older backends, a 404 from `/api/meets/choices` makes the client fall back t
 ```json
 [
     {
-        "name": "2026-01-10 [example/123] EXAMPLE Winter Open",
+        "name": "2026 EXAMPLE Winter Open",
         "value": "example/123"
     }
 ]

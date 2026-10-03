@@ -22,6 +22,14 @@ function legacyMeetName(meet: Meet): string {
 }
 
 function meetLabel(meet: (typeof meetData)[number]): string {
+    const name = legacyMeetName(meet);
+    const ambiguous = meetData.some(
+        (other) =>
+            other !== meet &&
+            legacyMeetName(other).toLowerCase().trim() ===
+                name.toLowerCase().trim(),
+    );
+    if (!ambiguous) return name;
     return `${meet.date} [${meetPath(meet)}] ${meet.federation} ${meet.name}`;
 }
 
@@ -62,7 +70,11 @@ export async function getMeetAutocomplete(
     limit: number = 10,
 ): Promise<MeetChoice[] | undefined> {
     return matchSorter(meetData, query, {
-        keys: [meetLabel, legacyMeetName],
+        keys: [
+            meetLabel,
+            legacyMeetName,
+            (meet) => `${meet.date} [${meetPath(meet)}]`,
+        ],
     })
         .slice(0, limit)
         .map((meet) => ({
