@@ -127,4 +127,4 @@ jobs:
             - name: Require every check to pass
               env:
                   RESULTS: ${{ join(needs.*.result, ',') }}
-              run: test "$RESULTS" = 'success,success,success,success,success'
+              run: '[[ "$RESULTS" =~ ^success(,success)*$ ]]'

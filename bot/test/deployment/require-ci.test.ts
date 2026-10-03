@@ -85,9 +85,9 @@ describe('deployment CI gate', () => {
             '--limit',
             '20',
             '--json',
-            'databaseId,event',
+            'databaseId,event,number',
             '--jq',
-            'map(select(.event == "push" or .event == "workflow_dispatch")) | .[0].databaseId // empty',
+            'map(select(.event == "push" or .event == "workflow_dispatch")) | max_by(.number).databaseId // empty',
         ]);
         expect(result.commands[1]).toEqual([
             'run',
