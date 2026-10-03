@@ -1,6 +1,6 @@
 # Data API
 
-Set `API_BASE_URL` in `bot/.env` to a reachable HTTP or HTTPS base URL and keep `ENABLE_MOCK_API=false`. The URL must not contain credentials, query parameters or fragments.
+Set `API_BASE_URL` in `bot/.env` to a reachable HTTP or HTTPS base URL and keep `ENABLE_MOCK_API=false`. The URL must not contain credentials, query parameters or fragments. This is the data backend's URL, not the bot's health server on port 3000. Mock mode uses local fixtures instead of these routes.
 
 ## Required routes
 
@@ -42,9 +42,9 @@ Meet choices use `name` for the label and `value` for the full OPL path:
 
 Selecting this choice sends `example/123` to `/api/meets` as the `name` query parameter. Return only that meet and its entries. The date and path in the label distinguish meets with the same name.
 
-## Examples
+For older backends, a 404 from `/api/meets/choices` makes the client fall back to `/api/meets/autocomplete` with the same query parameters. That route returns `string[]`; each name becomes both the choice label and value. New backends should implement `/api/meets/choices` with full OPL paths.
 
-Just some examples on how the responses for each should look.
+## Examples
 
 <details>
 <summary>Lifter</summary>
