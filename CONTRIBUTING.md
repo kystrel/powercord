@@ -24,6 +24,12 @@ docker compose --env-file bot/.env -f bot/compose.yaml up --build -d
 
 Set `ENABLE_MOCK_API=false`; the image runs in production mode. `API_BASE_URL` must be reachable from the container. On Docker Desktop, `http://host.docker.internal:3001` reaches a host API. For a container API, use its name and port, connect it with `docker network connect bot_default <api-container>`, then restart the bot using the same Compose options. `bot_default` is the default network for this Compose file.
 
+## Website development
+
+The Astro website uses `web/src/pages`, `components`, `layouts`, `assets`, and `styles`. Shared metadata and links are in `web/src/config/site.ts`; the daisyUI theme is in `web/src/styles/global.css`. Run `pnpm dev:web` for development or `pnpm --filter powercord-web preview` after a build.
+
+Install Chromium once with `pnpm --filter powercord-web exec playwright install chromium`. Vitest runs component tests and browser checks against a fresh static build. Netlify uses the root `netlify.toml`; keep the base directory at the repository root and publish `web/dist`. Connect the site and configure the existing custom domain in Netlify before switching hosting.
+
 ## Checks and pull requests
 
 Add or update tests for behavior changes, then run the checks relevant to your change:

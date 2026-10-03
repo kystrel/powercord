@@ -23,6 +23,7 @@ WORKDIR /app
 COPY --chown=65532:65532 package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY --chown=65532:65532 bot/package.json ./bot/package.json
 COPY --chown=65532:65532 web/package.json ./web/package.json
+COPY --chown=65532:65532 patches/ ./patches/
 
 # hadolint ignore=DL3059
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store,uid=65532,gid=65532 \
@@ -34,6 +35,7 @@ WORKDIR /app
 COPY --chown=65532:65532 package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY --chown=65532:65532 bot/package.json ./bot/package.json
 COPY --chown=65532:65532 web/package.json ./web/package.json
+COPY --chown=65532:65532 patches/ ./patches/
 
 # hadolint ignore=DL3059
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store,uid=65532,gid=65532 \

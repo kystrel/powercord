@@ -22,13 +22,12 @@
     "test:bot:coverage": "pnpm --filter powercord-bot run test:coverage",
     "test:web": "pnpm --filter powercord-web test",
     "test:web:coverage": "pnpm --filter powercord-web run test:coverage",
-    "clean": "rm -rf node_modules pnpm-lock.yaml bot/node_modules web/node_modules web/.nuxt web/.output web/dist"
+    "clean": "rm -rf node_modules pnpm-lock.yaml bot/node_modules web/node_modules web/.astro web/dist"
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.7",
     "@eslint/js": "10.0.1",
     "@ianvs/prettier-plugin-sort-imports": "4.7.1",
-    "@vue/compiler-sfc": "3.5.43",
     "concurrently": "10.0.5",
     "eslint": "10.8.0",
     "eslint-config-prettier": "10.1.8",
