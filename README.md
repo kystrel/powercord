@@ -6,21 +6,17 @@
 </p>
 
 [![CI Status](https://github.com/kystrel/powercord/actions/workflows/ci.yml/badge.svg)](https://github.com/kystrel/powercord/actions/workflows/ci.yml)
-[![Web Deployment Status](https://vercelbadge.vercel.app/api/kystrel/powercord)](https://powercord-gilt.vercel.app/)
 [![Codecov Coverage](https://codecov.io/gh/kystrel/powercord/graph/badge.svg?token=04DYKZJMH3)](https://codecov.io/gh/kystrel/powercord)
 [![Discord JS](https://img.shields.io/badge/discord.js-14.27.x-orange.svg)](https://discord.js.org/)
 [![Code style: Prettier](https://img.shields.io/badge/code_style-prettier-ff69b4)](https://github.com/prettier/prettier)
 
 <!-- [![Invite to Discord Server](https://img.shields.io/badge/discord-invite%20to%20server-5865F2?logo=discord&logoColor=white)](https://discord.com/api/oauth2/authorize?client_id=1306740469484486697&permissions=0&scope=bot%20applications.commands) -->
-<!-- [![Open Trello board](https://img.shields.io/badge/trello-open_roadmap-026AA7?logo=Trello&logoColor=white)](https://trello.com/b/pm9X3ZfI) -->
 
 **[Add to Discord] &nbsp;&nbsp;&bull;&nbsp;&nbsp;**
-**[Support Server] &nbsp;&nbsp;&bull;&nbsp;&nbsp;**
-**[Roadmap]**
+**[Support Server]**
 
 [Add to Discord]: https://discord.com/oauth2/authorize?client_id=1306740469484486697&permissions=0&scope=bot%20applications.commands
 [Support Server]: https://discord.com/invite/MZfchrRah4
-[Roadmap]: https://trello.com/b/pm9X3ZfI
 
 [![Better Stack Uptime Monitor](https://uptime.betterstack.com/status-badges/v3/monitor/26gjw.svg)](https://status.powercord.gg/)
 
@@ -34,7 +30,9 @@ No other system level dependencies are needed.
 
 ### Environment
 
-This project uses [dotenv](https://github.com/motdotla/dotenv#readme) to manage environment-specific settings. Rename the `.env.example` file in the `bot` directory to `.env` and enter in the necessary values listed inside the file. If you do not have a token yet, check out [this guide](https://discordjs.guide/preparations/setting-up-a-bot-application.html).
+This project uses [dotenv](https://github.com/motdotla/dotenv#readme) to manage environment-specific settings. Copy the `.env.example` file in the `bot` directory to `.env` and enter in the necessary values listed inside the file. If you do not have a token yet, check out [this guide](https://discordjs.guide/preparations/setting-up-a-bot-application.html).
+
+Set `ENABLE_MOCK_API=true` for local development with mock data, or set it to `false` and provide `API_BASE_URL` for a backend. Leave `DISCORD_TOKEN` empty if you do not need a Discord connection, and clear unused optional placeholder values.
 
 > [!WARNING]
 > Keep the Discord token to yourself at all costs.
