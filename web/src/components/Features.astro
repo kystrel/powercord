@@ -1,0 +1,42 @@
+---
+import { CloudDownload, Code, Heart, Zap } from '@lucide/astro';
+
+const features = [
+    {
+        title: 'Zero Configuration',
+        description:
+            'Simply invite the bot to your server and start using commands in Discord right away.',
+        icon: Zap,
+    },
+    {
+        title: 'Always Up-to-date',
+        description:
+            'Built to grab all the latest meet results from the OPL Data Service nightly.',
+        icon: CloudDownload,
+    },
+    {
+        title: 'Open Source',
+        description:
+            'Completely open source and available on GitHub for self-hosting or contributions.',
+        icon: Code,
+    },
+    {
+        title: 'Support Available',
+        description:
+            'Join our support server for help on usage or hosting. Feedback also welcome!',
+        icon: Heart,
+    },
+];
+---
+
+<section aria-label="Features" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    {features.map(({ title, description, icon: Icon }) => (
+        <article class="card bg-base-200">
+            <div class="card-body">
+                <Icon aria-hidden="true" size={28} class="text-primary" />
+                <h2 class="card-title">{title}</h2>
+                <p>{description}</p>
+            </div>
+        </article>
+    ))}
+</section>

@@ -1,30 +1,14 @@
-import { defineVitestConfig } from '@nuxt/test-utils/config';
+import { getViteConfig } from 'astro/config';
+import type {} from 'vitest/config';
 
-export default defineVitestConfig({
-    resolve: {
-        dedupe: [
-            'vue',
-            '@vue/runtime-core',
-            '@vue/runtime-dom',
-            '@vue/reactivity',
-        ],
-    },
+export default getViteConfig({
     test: {
-        environment: 'nuxt',
-        environmentOptions: {
-            nuxt: {
-                domEnvironment: 'jsdom',
-            },
-        },
+        environment: 'node',
         coverage: {
             provider: 'v8',
             reporter: ['text', 'lcov'],
             reportsDirectory: './coverage',
-            include: [
-                'components/**/*.{js,ts,vue}',
-                'layouts/**/*.{js,ts,vue}',
-                'pages/**/*.{js,ts,vue}',
-            ],
+            include: ['src/**/*.{ts,astro}'],
         },
     },
 });

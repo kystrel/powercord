@@ -1,0 +1,26 @@
+---
+import { Image } from 'astro:assets';
+import logo from '../assets/logo.png';
+import { site } from '../config/site';
+---
+
+<header>
+    <div class="navbar mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+        <a
+            href="/"
+            class="flex items-center gap-3 text-2xl font-bold"
+            aria-label="PowerCord home"
+        >
+            <Image
+                src={logo}
+                width={56}
+                height={56}
+                densities={[1, 2, 3]}
+                format="png"
+                alt=""
+                loading="eager"
+            />
+            {site.name}
+        </a>
+    </div>
+</header>

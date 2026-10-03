@@ -1,0 +1,41 @@
+---
+import { site } from '../config/site';
+
+interface Props {
+    title?: string;
+    noindex?: boolean;
+}
+
+const { title = site.title, noindex = false } = Astro.props;
+const canonical = new URL(Astro.url.pathname, site.url);
+const image = new URL('/ogImage.png', site.url);
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{title}</title>
+<meta name="description" content={site.description} />
+{noindex && <meta name="robots" content="noindex" />}
+<link rel="canonical" href={canonical} />
+<link rel="icon" href="/favicon.ico" />
+<meta name="theme-color" content="#111111" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={site.name} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={site.description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={image} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta
+    property="og:image:alt"
+    content="PowerCord, the powerlifting Discord bot"
+/>
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={site.description} />
+<meta name="twitter:image" content={image} />
+<meta
+    name="twitter:image:alt"
+    content="PowerCord, the powerlifting Discord bot"
+/>
