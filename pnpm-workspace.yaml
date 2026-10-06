@@ -6,7 +6,7 @@ overrides:
     'astro@7.3.5>http-cache-semantics': '-'
     'nodemon@3.1.14>chokidar': '4.0.3'
     'brace-expansion@>=4.0.0 <5.0.9': '5.0.12'
-    devalue: '5.9.3'
+    devalue: '5.9.4'
     'esbuild@>=0.27.3 <0.28.1': '0.28.2'
     postcss: '8.5.28'
     'undici@>=6.0.0 <6.28.1': '6.28.1'
