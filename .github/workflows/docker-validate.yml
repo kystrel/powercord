@@ -46,6 +46,7 @@ jobs:
                   file: bot/Dockerfile
                   platforms: linux/arm64
                   pull: true
+                  no-cache-filters: runtime
                   load: true
                   tags: powercord-bot-validate:${{ github.sha }}
                   build-args: |
