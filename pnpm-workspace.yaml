@@ -4,6 +4,7 @@ packages:
 
 overrides:
     'astro@7.3.5>http-cache-semantics': '-'
+    'concurrently@10.0.5>shell-quote': '1.11.0'
     'nodemon@3.1.14>chokidar': '4.0.3'
     'brace-expansion@>=4.0.0 <5.0.9': '5.0.12'
     devalue: '5.9.4'
