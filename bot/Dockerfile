@@ -50,7 +50,7 @@ FROM node:24.18.0-bookworm-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd3
 # Keep the pinned base image while applying Debian security updates.
 # hadolint ignore=DL3008
 RUN apt-get update \
-    && apt-get install --no-install-recommends --only-upgrade -y libpcre2-8-0 \
+    && apt-get install --no-install-recommends --only-upgrade -y libpcre2-8-0 perl-base \
     && rm -rf /var/lib/apt/lists/* \
     /opt/yarn-* \
     /usr/local/bin/corepack \
