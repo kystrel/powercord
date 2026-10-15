@@ -16,7 +16,7 @@
     "@lucide/astro": "1.49.0",
     "@tailwindcss/vite": "4.3.3",
     "astro": "7.3.5",
-    "daisyui": "5.7.46",
+    "daisyui": "5.7.47",
     "sharp": "0.35.5",
     "simple-icons": "16.33.0",
     "tailwindcss": "4.3.3"
