@@ -59,12 +59,38 @@ describe('website content', () => {
                 .querySelector('link[rel="canonical"]')
                 ?.getAttribute('href'),
         ).toBe(`${site.url}/`);
+        expect(document.querySelector('meta[name="robots"]')).toBeNull();
+    });
+
+    it('uses a compact logo preview with the social title and existing description', async () => {
+        const container = await AstroContainer.create();
+        const html = await container.renderToString(BaseHead, {
+            request: new Request('https://preview.example/'),
+        });
+        const { document } = new JSDOM(`<head>${html}</head>`).window;
+        expect(document.title).toBe(site.title);
+        for (const selector of [
+            'meta[property="og:title"]',
+            'meta[name="twitter:title"]',
+        ]) {
+            expect(
+                document.querySelector(selector)?.getAttribute('content'),
+            ).toBe('Powerlifting competition results in Discord');
+        }
+        for (const selector of [
+            'meta[name="description"]',
+            'meta[property="og:description"]',
+            'meta[name="twitter:description"]',
+        ]) {
+            expect(
+                document.querySelector(selector)?.getAttribute('content'),
+            ).toBe(site.description);
+        }
         expect(
             document
-                .querySelector('meta[property="og:image"]')
+                .querySelector('meta[name="twitter:card"]')
                 ?.getAttribute('content'),
-        ).toBe(`${site.url}/ogImage.png`);
-        expect(document.querySelector('meta[name="robots"]')).toBeNull();
+        ).toBe('summary');
     });
 
     it('provides a noindex error page and a working home link', async () => {

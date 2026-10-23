@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import type { PreviewServer } from 'astro';
 import axe from 'axe-core';
+import { JSDOM } from 'jsdom';
 import { chromium, type Browser } from 'playwright';
 import sharp from 'sharp';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -149,6 +150,36 @@ describe('built static website', () => {
         expect(await (await fetch(`${url}/robots.txt`)).text()).toContain(
             'User-Agent: *',
         );
+    });
+
+    it('serves the square logo referenced by the compact preview metadata', async () => {
+        const html = await (await fetch(url)).text();
+        const { document } = new JSDOM(html).window;
+        const image = document
+            .querySelector('meta[property="og:image"]')!
+            .getAttribute('content')!;
+        expect(new URL(image).origin).toBe('https://www.powercord.gg');
+        expect(
+            document
+                .querySelector('meta[name="twitter:image"]')
+                ?.getAttribute('content'),
+        ).toBe(image);
+        const response = await fetch(`${url}${new URL(image).pathname}`);
+        expect(response.status).toBe(200);
+        expect(response.headers.get('content-type')).toContain('image/png');
+        const content = Buffer.from(await response.arrayBuffer());
+        expect(content).toEqual(
+            await readFile(new URL('../src/assets/logo.png', import.meta.url)),
+        );
+        const metadata = await sharp(content).metadata();
+        expect(metadata.width).toBe(metadata.height);
+        for (const dimension of ['width', 'height'] as const) {
+            expect(
+                document
+                    .querySelector(`meta[property="og:image:${dimension}"]`)
+                    ?.getAttribute('content'),
+            ).toBe(String(metadata[dimension]));
+        }
     });
 
     it('returns a real 404 for unknown routes', async () => {
