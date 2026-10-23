@@ -2,6 +2,7 @@ export const site = {
     name: 'PowerCord',
     url: 'https://www.powercord.gg',
     title: 'PowerCord | Powerlifting competition results in Discord',
+    socialTitle: 'Powerlifting competition results in Discord',
     description:
         'View powerlifting meet results, lifter profiles, and top totals in your own Discord server. Powered by OpenPowerlifting data and completely open source.',
     links: {
