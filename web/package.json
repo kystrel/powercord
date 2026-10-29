@@ -16,7 +16,7 @@
     "@lucide/astro": "1.49.0",
     "@tailwindcss/vite": "4.3.3",
     "astro": "7.3.5",
-    "daisyui": "5.7.47",
+    "daisyui": "5.7.50",
     "sharp": "0.35.5",
     "simple-icons": "16.33.0",
     "tailwindcss": "4.3.3"
@@ -24,11 +24,11 @@
   "devDependencies": {
     "@astrojs/check": "0.9.10",
     "@types/jsdom": "30.0.0",
-    "@vitest/coverage-v8": "4.1.11",
+    "@vitest/coverage-v8": "4.1.12",
     "axe-core": "4.13.0",
     "jsdom": "30.0.0",
     "playwright": "1.63.0",
     "typescript": "6.0.3",
-    "vitest": "4.1.11"
+    "vitest": "4.1.12"
   }
 }
