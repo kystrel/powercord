@@ -3,7 +3,8 @@ packages:
     - 'web'
 
 overrides:
-    'astro@7.3.5>http-cache-semantics': '-'
+    '@astrojs/language-server@2.17.2>@astrojs/astro2tsx': '0.1.4'
+    'astro@7.4.7>http-cache-semantics': '-'
     'concurrently@10.0.5>shell-quote': '1.11.0'
     'nodemon@3.1.14>chokidar': '4.0.3'
     'brace-expansion@>=4.0.0 <5.0.9': '5.0.12'
@@ -30,4 +31,4 @@ allowBuilds:
     unrs-resolver: true
 
 patchedDependencies:
-    astro@7.3.5: patches/astro@7.3.5.patch
+    astro@7.4.7: patches/astro@7.4.7.patch
