@@ -3,7 +3,7 @@ packages:
     - 'web'
 
 overrides:
-    '@astrojs/language-server@2.17.2>@astrojs/astro2tsx': '0.1.4'
+    '@astrojs/language-server@2.17.3>@astrojs/astro2tsx': '0.1.4'
     'astro@7.4.7>http-cache-semantics': '-'
     'concurrently@10.0.5>shell-quote': '1.11.0'
     'nodemon@3.1.14>chokidar': '4.0.3'
@@ -12,10 +12,10 @@ overrides:
     devalue: '5.9.4'
     'esbuild@>=0.27.3 <0.28.1': '0.28.2'
     'fast-uri@>=3.0.0 <3.1.9': '3.1.9'
-    postcss: '8.5.30'
+    postcss: '8.5.32'
     'undici@>=6.0.0 <6.29.1': '6.29.1'
-    'undici@>=7.0.0 <7.30.1': '7.30.1'
-    'undici@>=8.0.0 <8.12.2': '8.12.2'
+    'undici@>=7.0.0 <7.30.2': '7.30.2'
+    'undici@>=8.0.0 <8.12.4': '8.12.4'
 
 minimumReleaseAgeExclude:
     - brace-expansion@5.0.12

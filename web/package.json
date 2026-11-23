@@ -14,15 +14,15 @@
   },
   "dependencies": {
     "@lucide/astro": "1.49.0",
-    "@tailwindcss/vite": "4.3.3",
+    "@tailwindcss/vite": "4.3.5",
     "astro": "7.4.7",
     "daisyui": "5.7.50",
     "sharp": "0.35.5",
     "simple-icons": "16.33.0",
-    "tailwindcss": "4.3.3"
+    "tailwindcss": "4.3.5"
   },
   "devDependencies": {
-    "@astrojs/check": "0.9.10",
+    "@astrojs/check": "0.9.12",
     "@types/jsdom": "30.0.0",
     "@vitest/coverage-v8": "4.1.12",
     "axe-core": "4.13.0",
