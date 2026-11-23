@@ -92,6 +92,11 @@ describe('built static website', () => {
                         .getByRole('link', { name: 'View on GitHub' })
                         .getAttribute('href'),
                 ).toBe('https://github.com/kystrel/powercord');
+                expect(
+                    await page
+                        .getByRole('link', { name: 'support server' })
+                        .getAttribute('href'),
+                ).toBe('https://discord.com/invite/MZfchrRah4');
                 const logo = page.locator('header img');
                 const logoSource = await logo.evaluate(
                     (image: HTMLImageElement) => image.currentSrc,
@@ -132,6 +137,19 @@ describe('built static website', () => {
                     window.axe.run(),
                 );
                 expect(accessibility.violations).toEqual([]);
+
+                await page.keyboard.press('Tab');
+                expect(
+                    await page
+                        .getByRole('link', { name: 'Skip to content' })
+                        .evaluate((link) => link === document.activeElement),
+                ).toBe(true);
+                await page.keyboard.press('Enter');
+                expect(
+                    await page
+                        .getByRole('main')
+                        .evaluate((main) => main === document.activeElement),
+                ).toBe(true);
             } finally {
                 await context.close();
             }
@@ -152,13 +170,23 @@ describe('built static website', () => {
         );
     });
 
-    it('serves the square logo referenced by the compact preview metadata', async () => {
+    it('uses production URLs and a square logo in the compact preview', async () => {
         const html = await (await fetch(url)).text();
         const { document } = new JSDOM(html).window;
+        expect(
+            document
+                .querySelector('link[rel="canonical"]')
+                ?.getAttribute('href'),
+        ).toBe('https://powercord.gg/');
+        expect(
+            document
+                .querySelector('meta[property="og:url"]')
+                ?.getAttribute('content'),
+        ).toBe('https://powercord.gg/');
         const image = document
             .querySelector('meta[property="og:image"]')!
             .getAttribute('content')!;
-        expect(new URL(image).origin).toBe('https://www.powercord.gg');
+        expect(new URL(image).origin).toBe('https://powercord.gg');
         expect(
             document
                 .querySelector('meta[name="twitter:image"]')
