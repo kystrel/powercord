@@ -1,6 +1,6 @@
 export const site = {
     name: 'PowerCord',
-    url: 'https://www.powercord.gg',
+    url: 'https://powercord.gg',
     title: 'PowerCord | Powerlifting competition results in Discord',
     socialTitle: 'Powerlifting competition results in Discord',
     description:

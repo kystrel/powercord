@@ -49,6 +49,8 @@ pnpm test:bot:coverage
 pnpm test:web:coverage
 ```
 
-Both test suites enforce 80% coverage for lines, statements, functions and branches. `pnpm format` fixes formatting and lint issues. Run `pnpm --filter powercord-bot build` or `pnpm --filter powercord-web build` when changing the corresponding application. CI also audits dependencies and validates Docker images and workflows. Open pull requests against `master`.
+Both test suites enforce 80% coverage for lines, statements, functions and branches. Codecov also checks project and patch coverage against an 80% target. `pnpm format` fixes formatting and lint issues. Run `pnpm --filter powercord-bot build` or `pnpm --filter powercord-web build` when changing the corresponding application.
+
+Open pull requests against `master`. The `ci-pass` job combines lint, formatting, the dependency audit, bot and web checks, Docker validation, and workflow security checks. Docker publishing waits for a successful `master` CI run on the same commit.
 
 For bug reports, include reproduction steps, expected and actual behavior, and relevant logs without credentials. Join the [support server](https://discord.com/invite/MZfchrRah4) for help.
