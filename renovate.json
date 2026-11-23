@@ -2,7 +2,9 @@
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
     "extends": ["config:best-practices", ":separateMultipleMajorReleases"],
     "baseBranchPatterns": ["master"],
-    "dependencyDashboard": true,
+    "dependencyDashboard": {
+        "enabled": true
+    },
     "configMigration": true,
     "schedule": ["* 0-4 * * *"],
     "timezone": "America/Chicago",
