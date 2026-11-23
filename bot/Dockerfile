@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+# syntax=docker/dockerfile:1@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183
 
 ARG PNPM_VERSION=11.17.0
 
@@ -50,7 +50,7 @@ FROM node:24.18.0-bookworm-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd3
 # Keep the pinned base image while applying Debian security updates.
 # hadolint ignore=DL3008
 RUN apt-get update \
-    && apt-get install --no-install-recommends --only-upgrade -y libpcre2-8-0 perl-base \
+    && apt-get install --no-install-recommends --only-upgrade -y apt libapt-pkg6.0 libpcre2-8-0 perl-base \
     && rm -rf /var/lib/apt/lists/* \
     /opt/yarn-* \
     /usr/local/bin/corepack \
