@@ -257,6 +257,14 @@ describe('Meet command', () => {
         expect(interaction.editReply).toHaveBeenCalledWith({
             content: 'Multiple meets match. Select a meet from autocomplete.',
         });
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                input: '2025 IPF Meet',
+                errorType: 'AmbiguousMeetError',
+                statusCode: 409,
+            }),
+            'command failed',
+        );
     });
 
     it('replies with not-found message when meet does not exist', async () => {
@@ -341,7 +349,6 @@ describe('Meet command', () => {
                 event: 'pagination.changed',
                 commandName: 'meet',
                 action: 'next',
-                input: 'Multi Page Meet',
                 previousPage: 1,
                 page: 2,
                 pageCount: 2,
@@ -349,6 +356,9 @@ describe('Meet command', () => {
                 duration_ms: expect.any(Number),
             }),
             'pagination changed',
+        );
+        expect(JSON.stringify(vi.mocked(logger.info).mock.calls)).not.toContain(
+            'Multi Page Meet',
         );
         const { embeds } = vi.mocked(buttonInteraction.update).mock
             .calls[0][0] as any;
@@ -442,7 +452,11 @@ describe('Meet command', () => {
         const buttonInteraction = {
             customId: 'next',
             user: { id: '12345' },
-            update: vi.fn().mockRejectedValue(new Error('update failed')),
+            update: vi
+                .fn()
+                .mockRejectedValue(
+                    new Error('Update failed for Multi Page Meet'),
+                ),
         };
         await handlers['collect'](buttonInteraction);
 
@@ -451,15 +465,20 @@ describe('Meet command', () => {
                 event: 'pagination.failed',
                 commandName: 'meet',
                 action: 'next',
-                input: 'Multi Page Meet',
                 previousPage: 1,
                 page: 2,
                 pageCount: 2,
                 entryCount: 6,
                 duration_ms: expect.any(Number),
-                err: expect.any(Error),
+                errorType: 'Error',
             }),
             'pagination failed',
+        );
+        expect(
+            JSON.stringify(vi.mocked(logger.error).mock.calls),
+        ).not.toContain('Multi Page Meet');
+        expect(vi.mocked(logger.error).mock.lastCall?.[0]).not.toHaveProperty(
+            'err',
         );
 
         const retryInteraction = {
@@ -474,7 +493,6 @@ describe('Meet command', () => {
                 event: 'pagination.changed',
                 commandName: 'meet',
                 action: 'next',
-                input: 'Multi Page Meet',
                 previousPage: 1,
                 page: 2,
             }),
@@ -490,22 +508,24 @@ describe('Meet command', () => {
         await execute(interaction as any);
 
         vi.mocked(interaction.editReply).mockImplementationOnce(() => {
-            throw new Error('edit failed');
+            throw new Error('Edit failed for Multi Page Meet');
         });
-        handlers['end']();
+        await handlers['end']();
 
         expect(vi.mocked(logger.error)).toHaveBeenCalledWith(
             expect.objectContaining({
                 event: 'pagination.disable_failed',
                 commandName: 'meet',
-                input: 'Multi Page Meet',
                 page: 1,
                 pageCount: 2,
                 entryCount: 6,
-                err: expect.any(Error),
+                errorType: 'Error',
             }),
             'pagination disable failed',
         );
+        expect(
+            JSON.stringify(vi.mocked(logger.error).mock.calls),
+        ).not.toContain('Multi Page Meet');
     });
 
     describe('autocomplete', () => {
@@ -535,6 +555,18 @@ describe('Meet command', () => {
                 },
                 { name: 'Labors of Speed', value: 'usapl/2502' },
             ]);
+            expect(logger.info).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    commandName: 'meet',
+                    outcome: 'success',
+                    queryLength: 2,
+                    resultCount: 2,
+                }),
+                'autocomplete completed',
+            );
+            expect(
+                JSON.stringify(vi.mocked(logger.info).mock.calls),
+            ).not.toContain('"La"');
         });
 
         it('truncates the label while preserving the complete selection value', async () => {
@@ -564,12 +596,23 @@ describe('Meet command', () => {
 
         it('responds with empty array when API throws', async () => {
             mockGetMeetAutocomplete.mockRejectedValue(
-                new Error('Network error'),
+                new Error('Network error for La'),
             );
             const interaction = createAutocompleteInteraction('La');
             await autocomplete(interaction);
 
             expect(interaction.respond).toHaveBeenCalledWith([]);
+            expect(logger.error).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    commandName: 'meet',
+                    queryLength: 2,
+                    errorType: 'Error',
+                }),
+                'autocomplete failed',
+            );
+            expect(
+                JSON.stringify(vi.mocked(logger.error).mock.calls),
+            ).not.toContain('La');
         });
     });
 
@@ -591,7 +634,6 @@ describe('Meet command', () => {
             expect.objectContaining({
                 event: 'pagination.ended',
                 commandName: 'meet',
-                input: 'Multi Page Meet',
                 page: 1,
                 pageCount: 2,
                 entryCount: 6,

@@ -3,7 +3,7 @@ import { pingCommandDefinition } from '../../command-definitions';
 import {
     elapsedMs,
     errorLogFields,
-    interactionLocation,
+    interactionContext,
 } from '../../logging/fields';
 import logger from '../../logging/logger';
 
@@ -11,7 +11,7 @@ module.exports = {
     data: pingCommandDefinition,
     async execute(interaction: ChatInputCommandInteraction) {
         const startedAt = Date.now();
-        const logContext = interactionLocation(interaction);
+        const logContext = interactionContext(interaction);
 
         try {
             await interaction.reply('Pong!');

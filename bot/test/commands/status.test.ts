@@ -20,6 +20,7 @@ const makeInteraction = (latencyMs = 50) => {
 
     return {
         createdTimestamp: interactionTimestamp,
+        user: { id: '12345' },
         reply: vi.fn().mockResolvedValue({
             createdTimestamp: sentTimestamp,
         }),

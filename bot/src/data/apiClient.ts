@@ -9,7 +9,9 @@ export interface DataStatus {
     meetCount: number;
 }
 
-export class AmbiguousMeetError extends Error {}
+export class AmbiguousMeetError extends Error {
+    readonly statusCode = 409;
+}
 
 async function request<T>(
     route: string,
@@ -36,7 +38,10 @@ async function request<T>(
             );
         }
         if (response.status === 404 && allowMissing) return undefined;
-        throw new Error(`Data API request failed (${response.status})`);
+        throw Object.assign(
+            new Error(`Data API request failed (${response.status})`),
+            { statusCode: response.status },
+        );
     }
     return (await response.json()) as T;
 }

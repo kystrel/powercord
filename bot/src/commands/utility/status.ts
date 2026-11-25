@@ -4,7 +4,7 @@ import { getDataStatus } from '../../data/api';
 import {
     elapsedMs,
     errorLogFields,
-    interactionLocation,
+    interactionContext,
 } from '../../logging/fields';
 import logger from '../../logging/logger';
 import { enforceEmbedLimits } from '../../utils/discord';
@@ -28,7 +28,7 @@ module.exports = {
     data: statusCommandDefinition,
     async execute(interaction: ChatInputCommandInteraction) {
         const startedAt = Date.now();
-        const logContext = interactionLocation(interaction);
+        const logContext = interactionContext(interaction);
 
         try {
             const sent = await interaction.reply({

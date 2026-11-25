@@ -12,8 +12,8 @@ import { api } from '../../data/api';
 import { AmbiguousMeetError } from '../../data/apiClient';
 import {
     elapsedMs,
-    errorLogFields,
-    interactionLocation,
+    errorLogSummary,
+    interactionContext,
 } from '../../logging/fields';
 import logger from '../../logging/logger';
 import { Meet } from '../../types/types';
@@ -85,14 +85,13 @@ module.exports = {
     data: meetCommandDefinition,
     async execute(interaction: ChatInputCommandInteraction) {
         const startedAt = Date.now();
-        const logContext = interactionLocation(interaction);
-        let input: string | undefined;
+        const logContext = interactionContext(interaction);
+        let name: string | null = null;
 
         try {
+            name = interaction.options.getString('name');
             await interaction.deferReply();
 
-            const name = interaction.options.getString('name');
-            input = name ?? undefined;
             if (!name) {
                 await interaction.editReply('You need to specify a meet.');
                 logger.info(
@@ -108,7 +107,7 @@ module.exports = {
                 return;
             }
 
-            const meet: Meet | undefined = await api.getMeet(name);
+            const meet = await api.getMeet(name);
 
             if (!meet || meet.entries.length === 0) {
                 const notFoundMessage = truncateDiscordText(
@@ -121,7 +120,6 @@ module.exports = {
                         event: 'command.completed',
                         commandName: 'meet',
                         outcome: 'not_found',
-                        input: name,
                         found: false,
                         ...logContext,
                         duration_ms: elapsedMs(startedAt),
@@ -241,7 +239,6 @@ module.exports = {
                             event: 'pagination.changed',
                             commandName: 'meet',
                             action: i.customId,
-                            input: name,
                             previousPage,
                             page: targetPage,
                             pageCount: maxPages,
@@ -257,14 +254,13 @@ module.exports = {
                             event: 'pagination.failed',
                             commandName: 'meet',
                             action: i.customId,
-                            input: name,
                             previousPage,
                             page: targetPage,
                             pageCount: maxPages,
                             entryCount: entries.length,
                             ...logContext,
                             duration_ms: elapsedMs(paginationStartedAt),
-                            ...errorLogFields(error),
+                            ...errorLogSummary(error),
                         },
                         'pagination failed',
                     );
@@ -283,7 +279,6 @@ module.exports = {
                         {
                             event: 'pagination.ended',
                             commandName: 'meet',
-                            input: name,
                             page: currentPage,
                             pageCount: maxPages,
                             entryCount: entries.length,
@@ -297,13 +292,12 @@ module.exports = {
                         {
                             event: 'pagination.disable_failed',
                             commandName: 'meet',
-                            input: name,
                             page: currentPage,
                             pageCount: maxPages,
                             entryCount: entries.length,
                             ...logContext,
                             duration_ms: elapsedMs(paginationStartedAt),
-                            ...errorLogFields(error),
+                            ...errorLogSummary(error),
                         },
                         'pagination disable failed',
                     );
@@ -315,7 +309,6 @@ module.exports = {
                     event: 'command.completed',
                     commandName: 'meet',
                     outcome: 'success',
-                    input: name,
                     found: true,
                     entryCount: entries.length,
                     pageCount: maxPages,
@@ -329,10 +322,10 @@ module.exports = {
                 {
                     event: 'command.failed',
                     commandName: 'meet',
-                    input,
+                    input: name ?? undefined,
                     ...logContext,
                     duration_ms: elapsedMs(startedAt),
-                    ...errorLogFields(error),
+                    ...errorLogSummary(error),
                 },
                 'command failed',
             );
@@ -354,14 +347,14 @@ module.exports = {
     },
     async autocomplete(interaction: AutocompleteInteraction) {
         const startedAt = Date.now();
-        const logContext = interactionLocation(interaction);
-        let query = '';
+        const logContext = interactionContext(interaction);
+        let queryLength = 0;
 
         try {
-            const focusedValue = String(interaction.options.getFocused());
-            query = focusedValue;
+            const query = String(interaction.options.getFocused());
+            queryLength = query.length;
 
-            if (!focusedValue || focusedValue.length < 2) {
+            if (queryLength < 2) {
                 await interaction.respond([]);
                 logger.info(
                     {
@@ -369,8 +362,7 @@ module.exports = {
                         commandName: 'meet',
                         autocompleteKind: 'meet',
                         outcome: 'skipped',
-                        query,
-                        queryLength: query.length,
+                        queryLength,
                         resultCount: 0,
                         ...logContext,
                         duration_ms: elapsedMs(startedAt),
@@ -380,7 +372,7 @@ module.exports = {
                 return;
             }
 
-            const meetChoices = await api.getMeetAutocomplete(focusedValue, 25);
+            const meetChoices = await api.getMeetAutocomplete(query, 25);
 
             if (!meetChoices) {
                 await interaction.respond([]);
@@ -390,8 +382,7 @@ module.exports = {
                         commandName: 'meet',
                         autocompleteKind: 'meet',
                         outcome: 'empty',
-                        query,
-                        queryLength: query.length,
+                        queryLength,
                         resultCount: 0,
                         ...logContext,
                         duration_ms: elapsedMs(startedAt),
@@ -413,8 +404,7 @@ module.exports = {
                     commandName: 'meet',
                     autocompleteKind: 'meet',
                     outcome: 'success',
-                    query,
-                    queryLength: query.length,
+                    queryLength,
                     resultCount: choices.length,
                     ...logContext,
                     duration_ms: elapsedMs(startedAt),
@@ -427,11 +417,10 @@ module.exports = {
                     event: 'autocomplete.failed',
                     commandName: 'meet',
                     autocompleteKind: 'meet',
-                    query,
-                    queryLength: query.length,
+                    queryLength,
                     ...logContext,
                     duration_ms: elapsedMs(startedAt),
-                    ...errorLogFields(error),
+                    ...errorLogSummary(error),
                 },
                 'autocomplete failed',
             );

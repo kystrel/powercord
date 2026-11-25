@@ -18,6 +18,8 @@ export const createChatInputInteraction = (
             }),
         }),
         user: { id: '12345' },
+        guildId: '23456',
+        channelId: '34567',
         deferred: opts.deferred ?? false,
         replied: false,
     }) as unknown as ChatInputCommandInteraction;
@@ -26,6 +28,7 @@ export const createAutocompleteInteraction = (focused: string) =>
     ({
         options: { getFocused: vi.fn().mockReturnValue(focused) },
         respond: vi.fn().mockResolvedValue(undefined),
+        user: { id: '12345' },
     }) as unknown as AutocompleteInteraction;
 
 export type CollectorHandlers = Record<string, (...args: any[]) => any>;

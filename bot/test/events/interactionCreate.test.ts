@@ -31,6 +31,7 @@ const makeAutocompleteInteraction = (
         isChatInputCommand: vi.fn().mockReturnValue(false),
         commandName,
         client: { commands: commands ?? makeCommandsMap() },
+        user: { id: '12345' },
     }) as any;
 
 const makeChatInteraction = (
@@ -46,6 +47,7 @@ const makeChatInteraction = (
         followUp: vi.fn().mockResolvedValue(undefined),
         reply: vi.fn().mockResolvedValue(undefined),
         client: { commands: commands ?? makeCommandsMap() },
+        user: { id: '12345' },
     }) as any;
 
 describe('interactionCreate event', () => {

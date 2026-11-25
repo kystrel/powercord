@@ -8,11 +8,10 @@ import { getEmbedColor, getEmbedFooter } from '../../constants/embed';
 import { api } from '../../data/api';
 import {
     elapsedMs,
-    errorLogFields,
-    interactionLocation,
+    errorLogSummary,
+    interactionContext,
 } from '../../logging/fields';
 import logger from '../../logging/logger';
-import { Lifter } from '../../types/types';
 import {
     DISCORD_LIMITS,
     enforceEmbedLimits,
@@ -21,10 +20,6 @@ import {
     sanitizeDiscordText,
     truncateDiscordText,
 } from '../../utils/discord';
-
-async function fetchLifter(name: string): Promise<Lifter | undefined> {
-    return api.getLifter(name);
-}
 
 function formatPlacement(place: number): string {
     const absolutePlace = Math.abs(place);
@@ -50,14 +45,13 @@ module.exports = {
     data: lifterCommandDefinition,
     async execute(interaction: ChatInputCommandInteraction) {
         const startedAt = Date.now();
-        const logContext = interactionLocation(interaction);
-        let input: string | undefined;
+        const logContext = interactionContext(interaction);
+        let name: string | null = null;
 
         try {
+            name = interaction.options.getString('name');
             await interaction.deferReply();
 
-            const name = interaction.options.getString('name');
-            input = name ?? undefined;
             if (!name) {
                 await interaction.editReply(
                     'You need to specify a lifter name.',
@@ -75,7 +69,7 @@ module.exports = {
                 return;
             }
 
-            const lifter: Lifter | undefined = await fetchLifter(name);
+            const lifter = await api.getLifter(name);
 
             if (!lifter || lifter.meets.length === 0) {
                 const notFoundMessage = truncateDiscordText(
@@ -88,7 +82,6 @@ module.exports = {
                         event: 'command.completed',
                         commandName: 'lifter',
                         outcome: 'not_found',
-                        input: name,
                         found: false,
                         ...logContext,
                         duration_ms: elapsedMs(startedAt),
@@ -175,7 +168,6 @@ module.exports = {
                     event: 'command.completed',
                     commandName: 'lifter',
                     outcome: 'success',
-                    input: name,
                     found: true,
                     meetCount: lifter.meets.length,
                     personalBestCount: lifter.personalBests?.length ?? 0,
@@ -189,10 +181,10 @@ module.exports = {
                 {
                     event: 'command.failed',
                     commandName: 'lifter',
-                    input,
+                    input: name ?? undefined,
                     ...logContext,
                     duration_ms: elapsedMs(startedAt),
-                    ...errorLogFields(error),
+                    ...errorLogSummary(error),
                 },
                 'command failed',
             );
@@ -212,14 +204,14 @@ module.exports = {
     },
     async autocomplete(interaction: AutocompleteInteraction) {
         const startedAt = Date.now();
-        const logContext = interactionLocation(interaction);
-        let query = '';
+        const logContext = interactionContext(interaction);
+        let queryLength = 0;
 
         try {
-            const focusedValue = String(interaction.options.getFocused());
-            query = focusedValue;
+            const query = String(interaction.options.getFocused());
+            queryLength = query.length;
 
-            if (!focusedValue || focusedValue.length < 2) {
+            if (queryLength < 2) {
                 await interaction.respond([]);
                 logger.info(
                     {
@@ -227,8 +219,7 @@ module.exports = {
                         commandName: 'lifter',
                         autocompleteKind: 'lifter',
                         outcome: 'skipped',
-                        query,
-                        queryLength: query.length,
+                        queryLength,
                         resultCount: 0,
                         ...logContext,
                         duration_ms: elapsedMs(startedAt),
@@ -238,10 +229,7 @@ module.exports = {
                 return;
             }
 
-            const lifterNames = await api.getLifterAutocomplete(
-                focusedValue,
-                10,
-            );
+            const lifterNames = await api.getLifterAutocomplete(query, 10);
 
             if (!lifterNames) {
                 await interaction.respond([]);
@@ -251,8 +239,7 @@ module.exports = {
                         commandName: 'lifter',
                         autocompleteKind: 'lifter',
                         outcome: 'empty',
-                        query,
-                        queryLength: query.length,
+                        queryLength,
                         resultCount: 0,
                         ...logContext,
                         duration_ms: elapsedMs(startedAt),
@@ -262,8 +249,8 @@ module.exports = {
                 return;
             }
 
-            const choices = lifterNames.map((name: string) => ({
-                name: name,
+            const choices = lifterNames.map((name) => ({
+                name,
                 value: name,
             }));
 
@@ -274,8 +261,7 @@ module.exports = {
                     commandName: 'lifter',
                     autocompleteKind: 'lifter',
                     outcome: 'success',
-                    query,
-                    queryLength: query.length,
+                    queryLength,
                     resultCount: choices.length,
                     ...logContext,
                     duration_ms: elapsedMs(startedAt),
@@ -288,11 +274,10 @@ module.exports = {
                     event: 'autocomplete.failed',
                     commandName: 'lifter',
                     autocompleteKind: 'lifter',
-                    query,
-                    queryLength: query.length,
+                    queryLength,
                     ...logContext,
                     duration_ms: elapsedMs(startedAt),
-                    ...errorLogFields(error),
+                    ...errorLogSummary(error),
                 },
                 'autocomplete failed',
             );

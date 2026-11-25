@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { errorLogFields } from '../../src/logging/fields';
+import { errorLogFields, errorLogSummary } from '../../src/logging/fields';
 
 describe('errorLogFields', () => {
     it('returns err for a plain Error', () => {
@@ -80,4 +80,30 @@ describe('errorLogFields', () => {
             errorMessage: '42',
         });
     });
+});
+
+describe('errorLogSummary', () => {
+    it.each([
+        { code: 'Heracles', expectedCode: undefined },
+        { code: 50035, expectedCode: 50035 },
+    ])(
+        'logs only selected error metadata for code $code',
+        ({ code, expectedCode }) => {
+            const error = Object.assign(
+                new Error('Invalid search for Heracles'),
+                {
+                    name: 'SearchError[Heracles]',
+                    code,
+                    status: 400,
+                    requestBody: { name: 'Heracles' },
+                },
+            );
+
+            expect(errorLogSummary(error)).toEqual({
+                errorType: 'Error',
+                errorCode: expectedCode,
+                statusCode: 400,
+            });
+        },
+    );
 });
