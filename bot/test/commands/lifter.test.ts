@@ -247,14 +247,18 @@ describe('Lifter command', () => {
             expect(logger.error).toHaveBeenCalledWith(
                 expect.objectContaining({
                     commandName: 'lifter',
+                    input: 'Heracles',
+                    guildId: '23456',
+                    channelId: '34567',
+                    userId: '12345',
                     errorType: 'Error',
                     errorCode: 'ECONNRESET',
                 }),
                 'command failed',
             );
-            expect(
-                JSON.stringify(vi.mocked(logger.error).mock.calls),
-            ).not.toContain('Heracles');
+            const logFields = vi.mocked(logger.error).mock.lastCall?.[0];
+            expect(logFields).not.toHaveProperty('err');
+            expect(logFields).not.toHaveProperty('errorMessage');
         });
 
         it('does not set embed URL when lifter url is empty', async () => {
@@ -269,13 +273,20 @@ describe('Lifter command', () => {
             expect(call.embeds[0].url).toBeUndefined();
         });
 
-        it('replies ephemerally when API throws and interaction is not deferred', async () => {
-            mockGetLifter.mockRejectedValue(new Error('API failure'));
+        it('logs the lookup and replies ephemerally when deferring fails', async () => {
             const interaction = createChatInputInteraction({
                 name: 'Heracles',
             });
+            vi.mocked(interaction.deferReply).mockRejectedValueOnce(
+                new Error('Failed to defer reply'),
+            );
             await execute(interaction);
 
+            expect(mockGetLifter).not.toHaveBeenCalled();
+            expect(logger.error).toHaveBeenCalledWith(
+                expect.objectContaining({ input: 'Heracles' }),
+                'command failed',
+            );
             expect(interaction.reply).toHaveBeenCalledWith(
                 expect.objectContaining({
                     content:

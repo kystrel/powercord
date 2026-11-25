@@ -11,7 +11,7 @@ import { api } from '../../data/api';
 import {
     elapsedMs,
     errorLogFields,
-    interactionLocation,
+    interactionContext,
 } from '../../logging/fields';
 import logger from '../../logging/logger';
 import { TopLifter } from '../../types/types';
@@ -26,7 +26,7 @@ module.exports = {
     data: topCommandDefinition,
     async execute(interaction: ChatInputCommandInteraction) {
         const startedAt = Date.now();
-        const logContext = interactionLocation(interaction);
+        const logContext = interactionContext(interaction);
 
         try {
             await interaction.deferReply();

@@ -1,5 +1,5 @@
 import { Interaction, MessageFlags } from 'discord.js';
-import { errorLogFields, interactionLocation } from '../logging/fields';
+import { errorLogFields, interactionContext } from '../logging/fields';
 import logger from '../logging/logger';
 
 export default {
@@ -15,7 +15,7 @@ export default {
                         event: 'interaction.command_missing',
                         interactionType: 'autocomplete',
                         commandName: interaction.commandName,
-                        ...interactionLocation(interaction),
+                        ...interactionContext(interaction),
                     },
                     'interaction command missing',
                 );
@@ -33,7 +33,7 @@ export default {
                     {
                         event: 'interaction.autocomplete_failed',
                         commandName: interaction.commandName,
-                        ...interactionLocation(interaction),
+                        ...interactionContext(interaction),
                         ...errorLogFields(error),
                     },
                     'interaction autocomplete failed',
@@ -53,7 +53,7 @@ export default {
                     event: 'interaction.command_missing',
                     interactionType: 'chat_input',
                     commandName: interaction.commandName,
-                    ...interactionLocation(interaction),
+                    ...interactionContext(interaction),
                 },
                 'interaction command missing',
             );
@@ -67,7 +67,7 @@ export default {
                 {
                     event: 'interaction.command_failed',
                     commandName: interaction.commandName,
-                    ...interactionLocation(interaction),
+                    ...interactionContext(interaction),
                     ...errorLogFields(error),
                 },
                 'interaction command failed',

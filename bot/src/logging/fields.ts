@@ -1,6 +1,7 @@
-type InteractionLocation = {
+type InteractionContext = {
     guildId: string | null;
     channelId: string | null;
+    user: { id: string };
 };
 
 type ErrorWithContext = Error & {
@@ -32,10 +33,11 @@ function getErrorCode(error: ErrorWithContext): string | undefined {
     return undefined;
 }
 
-export function interactionLocation(interaction: InteractionLocation) {
+export function interactionContext(interaction: InteractionContext) {
     return {
         guildId: interaction.guildId ?? undefined,
         channelId: interaction.channelId ?? undefined,
+        userId: interaction.user.id,
     };
 }
 

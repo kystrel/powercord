@@ -9,7 +9,7 @@ import { api } from '../../data/api';
 import {
     elapsedMs,
     errorLogSummary,
-    interactionLocation,
+    interactionContext,
 } from '../../logging/fields';
 import logger from '../../logging/logger';
 import {
@@ -45,12 +45,13 @@ module.exports = {
     data: lifterCommandDefinition,
     async execute(interaction: ChatInputCommandInteraction) {
         const startedAt = Date.now();
-        const logContext = interactionLocation(interaction);
+        const logContext = interactionContext(interaction);
+        let name: string | null = null;
 
         try {
+            name = interaction.options.getString('name');
             await interaction.deferReply();
 
-            const name = interaction.options.getString('name');
             if (!name) {
                 await interaction.editReply(
                     'You need to specify a lifter name.',
@@ -180,6 +181,7 @@ module.exports = {
                 {
                     event: 'command.failed',
                     commandName: 'lifter',
+                    input: name ?? undefined,
                     ...logContext,
                     duration_ms: elapsedMs(startedAt),
                     ...errorLogSummary(error),
@@ -202,7 +204,7 @@ module.exports = {
     },
     async autocomplete(interaction: AutocompleteInteraction) {
         const startedAt = Date.now();
-        const logContext = interactionLocation(interaction);
+        const logContext = interactionContext(interaction);
         let queryLength = 0;
 
         try {

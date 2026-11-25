@@ -259,6 +259,7 @@ describe('Meet command', () => {
         });
         expect(logger.error).toHaveBeenCalledWith(
             expect.objectContaining({
+                input: '2025 IPF Meet',
                 errorType: 'AmbiguousMeetError',
                 statusCode: 409,
             }),

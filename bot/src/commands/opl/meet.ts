@@ -13,7 +13,7 @@ import { AmbiguousMeetError } from '../../data/apiClient';
 import {
     elapsedMs,
     errorLogSummary,
-    interactionLocation,
+    interactionContext,
 } from '../../logging/fields';
 import logger from '../../logging/logger';
 import { Meet } from '../../types/types';
@@ -85,12 +85,13 @@ module.exports = {
     data: meetCommandDefinition,
     async execute(interaction: ChatInputCommandInteraction) {
         const startedAt = Date.now();
-        const logContext = interactionLocation(interaction);
+        const logContext = interactionContext(interaction);
+        let name: string | null = null;
 
         try {
+            name = interaction.options.getString('name');
             await interaction.deferReply();
 
-            const name = interaction.options.getString('name');
             if (!name) {
                 await interaction.editReply('You need to specify a meet.');
                 logger.info(
@@ -321,6 +322,7 @@ module.exports = {
                 {
                     event: 'command.failed',
                     commandName: 'meet',
+                    input: name ?? undefined,
                     ...logContext,
                     duration_ms: elapsedMs(startedAt),
                     ...errorLogSummary(error),
@@ -345,7 +347,7 @@ module.exports = {
     },
     async autocomplete(interaction: AutocompleteInteraction) {
         const startedAt = Date.now();
-        const logContext = interactionLocation(interaction);
+        const logContext = interactionContext(interaction);
         let queryLength = 0;
 
         try {
