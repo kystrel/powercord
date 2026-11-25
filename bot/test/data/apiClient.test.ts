@@ -61,7 +61,10 @@ describe('HTTP data client', () => {
             )
             .mockResolvedValueOnce(new Response('invalid json'));
         vi.stubGlobal('fetch', fetchMock);
-        await expect(apiClient.getLifter('Taylor')).rejects.toThrow('503');
+        await expect(apiClient.getLifter('Taylor')).rejects.toMatchObject({
+            message: 'Data API request failed (503)',
+            statusCode: 503,
+        });
         await expect(apiClient.getMeet('Meet')).rejects.toThrow('fetch failed');
         await expect(apiClient.getLifterAutocomplete('a')).rejects.toThrow(
             'Timed out',

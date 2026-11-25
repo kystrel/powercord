@@ -5,9 +5,21 @@ type InteractionLocation = {
 
 type ErrorWithContext = Error & {
     code?: unknown;
+    status?: unknown;
     statusCode?: unknown;
     cause?: unknown;
 };
+
+const networkErrorCodes = new Set([
+    'EAI_AGAIN',
+    'ECONNREFUSED',
+    'ECONNRESET',
+    'ENOTFOUND',
+    'ETIMEDOUT',
+    'UND_ERR_BODY_TIMEOUT',
+    'UND_ERR_CONNECT_TIMEOUT',
+    'UND_ERR_HEADERS_TIMEOUT',
+]);
 
 function getErrorCode(error: ErrorWithContext): string | undefined {
     if (typeof error.code === 'string') return error.code;
@@ -24,6 +36,25 @@ export function interactionLocation(interaction: InteractionLocation) {
     return {
         guildId: interaction.guildId ?? undefined,
         channelId: interaction.channelId ?? undefined,
+    };
+}
+
+export function errorLogSummary(error: unknown) {
+    if (!(error instanceof Error)) {
+        return { errorType: typeof error };
+    }
+
+    const contextualError = error as ErrorWithContext;
+    const { code, status, statusCode = status } = contextualError;
+    const networkCode = getErrorCode(contextualError);
+    const knownNetworkCode =
+        networkCode && networkErrorCodes.has(networkCode)
+            ? networkCode
+            : undefined;
+    return {
+        errorType: error.constructor.name,
+        errorCode: typeof code === 'number' ? code : knownNetworkCode,
+        statusCode: typeof statusCode === 'number' ? statusCode : undefined,
     };
 }
 

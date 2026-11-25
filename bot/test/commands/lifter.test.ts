@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as lifterCommand from '../../src/commands/opl/lifter';
+import logger from '../../src/logging/logger';
 import {
     createAutocompleteInteraction,
     createChatInputInteraction,
@@ -68,6 +69,8 @@ describe('Lifter command', () => {
     beforeEach(() => {
         mockGetLifter.mockReset();
         mockGetLifterAutocomplete.mockReset();
+        vi.mocked(logger.info).mockClear();
+        vi.mocked(logger.error).mockClear();
     });
 
     describe('execute', () => {
@@ -89,6 +92,17 @@ describe('Lifter command', () => {
                     ],
                 }),
             );
+            expect(logger.info).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    commandName: 'lifter',
+                    outcome: 'success',
+                    meetCount: 1,
+                }),
+                'command completed',
+            );
+            expect(
+                JSON.stringify(vi.mocked(logger.info).mock.calls),
+            ).not.toContain('Heracles');
         });
 
         it('escapes and limits untrusted lifter data', async () => {
@@ -207,7 +221,17 @@ describe('Lifter command', () => {
         });
 
         it('replies with error message when the API throws', async () => {
-            mockGetLifter.mockRejectedValue(new Error('API failure'));
+            const cause = Object.assign(new Error('Connection lost'), {
+                code: 'ECONNRESET',
+            });
+            mockGetLifter.mockRejectedValue(
+                Object.assign(
+                    new Error('API failure for Heracles', { cause }),
+                    {
+                        requestBody: { json: { name: 'Heracles' } },
+                    },
+                ),
+            );
             const interaction = createChatInputInteraction({
                 name: 'Heracles',
                 deferred: true,
@@ -220,6 +244,17 @@ describe('Lifter command', () => {
                         'An error occurred while fetching the lifter data.',
                 }),
             );
+            expect(logger.error).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    commandName: 'lifter',
+                    errorType: 'Error',
+                    errorCode: 'ECONNRESET',
+                }),
+                'command failed',
+            );
+            expect(
+                JSON.stringify(vi.mocked(logger.error).mock.calls),
+            ).not.toContain('Heracles');
         });
 
         it('does not set embed URL when lifter url is empty', async () => {
@@ -268,6 +303,18 @@ describe('Lifter command', () => {
                 { name: 'Heracles', value: 'Heracles' },
                 { name: 'Hades', value: 'Hades' },
             ]);
+            expect(logger.info).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    commandName: 'lifter',
+                    outcome: 'success',
+                    queryLength: 2,
+                    resultCount: 2,
+                }),
+                'autocomplete completed',
+            );
+            expect(
+                JSON.stringify(vi.mocked(logger.info).mock.calls),
+            ).not.toContain('"He"');
         });
 
         it('responds with empty array when API returns no results', async () => {
@@ -280,12 +327,23 @@ describe('Lifter command', () => {
 
         it('responds with empty array when API throws', async () => {
             mockGetLifterAutocomplete.mockRejectedValue(
-                new Error('Network error'),
+                new Error('Network error for He'),
             );
             const interaction = createAutocompleteInteraction('He');
             await autocomplete(interaction);
 
             expect(interaction.respond).toHaveBeenCalledWith([]);
+            expect(logger.error).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    commandName: 'lifter',
+                    queryLength: 2,
+                    errorType: 'Error',
+                }),
+                'autocomplete failed',
+            );
+            expect(
+                JSON.stringify(vi.mocked(logger.error).mock.calls),
+            ).not.toContain('He');
         });
     });
 });
