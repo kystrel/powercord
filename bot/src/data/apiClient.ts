@@ -13,6 +13,38 @@ export class AmbiguousMeetError extends Error {
     readonly statusCode = 409;
 }
 
+class InvalidAutocompleteResponseError extends Error {}
+
+function parseAutocompleteNames(value: unknown): string[] {
+    if (
+        !Array.isArray(value) ||
+        !value.every((name) => typeof name === 'string')
+    ) {
+        throw new InvalidAutocompleteResponseError(
+            'Invalid autocomplete names',
+        );
+    }
+    return value;
+}
+
+function parseMeetChoices(value: unknown): MeetChoice[] {
+    if (
+        !Array.isArray(value) ||
+        !value.every(
+            (choice: unknown): choice is MeetChoice =>
+                choice !== null &&
+                typeof choice === 'object' &&
+                'name' in choice &&
+                typeof choice.name === 'string' &&
+                'value' in choice &&
+                typeof choice.value === 'string',
+        )
+    ) {
+        throw new InvalidAutocompleteResponseError('Invalid meet choices');
+    }
+    return value;
+}
+
 async function request<T>(
     route: string,
     params: Record<string, string | number> = {},
@@ -51,28 +83,33 @@ export const apiClient = {
         request<Lifter>('/api/lifters', { name }, true),
     getMeet: (name: string) => request<Meet>('/api/meets', { name }, true),
     getTopLifters: () => request<TopLifter[]>('/api/top'),
-    getLifterAutocomplete: (query: string, limit = 10) =>
-        request<string[]>(
+    getLifterAutocomplete: async (query: string, limit = 10) => {
+        const names = await request(
             '/api/lifters/autocomplete',
             { query, limit },
             false,
             2000,
-        ),
+        );
+        return parseAutocompleteNames(names);
+    },
     getMeetAutocomplete: async (query: string, limit = 10) => {
-        const choices = await request<MeetChoice[]>(
+        const choices = await request(
             '/api/meets/choices',
             { query, limit },
             true,
             2000,
         );
-        if (choices !== undefined) return choices;
-        const names = await request<string[]>(
+        if (choices !== undefined) return parseMeetChoices(choices);
+        const names = await request(
             '/api/meets/autocomplete',
             { query, limit },
             false,
             2000,
         );
-        return names?.map((name) => ({ name, value: name }));
+        return parseAutocompleteNames(names).map((name) => ({
+            name,
+            value: name,
+        }));
     },
 };
 

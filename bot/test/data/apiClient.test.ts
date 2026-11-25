@@ -5,6 +5,7 @@ import {
     checkApiHealth,
     fetchDataStatus,
 } from '../../src/data/apiClient';
+import { errorLogSummary } from '../../src/logging/fields';
 
 vi.mock('../../src/utils/config', () => ({
     config: { API_BASE_URL: 'http://powercord-api:3001/' },
@@ -13,15 +14,25 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe('HTTP data client', () => {
     it('encodes names and queries and uses the private API routes', async () => {
-        const fetchMock = vi
-            .fn()
-            .mockImplementation(async () => Response.json([]));
+        const fetchMock = vi.fn<
+            (url: URL, init: RequestInit) => Promise<Response>
+        >(async (url) =>
+            Response.json(
+                url.pathname === '/api/lifters/autocomplete'
+                    ? ['A. Smith']
+                    : [],
+            ),
+        );
         vi.stubGlobal('fetch', fetchMock);
         await apiClient.getLifter('A. Smith #1');
         await apiClient.getMeet('2026 FÉD Meet');
         await apiClient.getTopLifters();
-        await apiClient.getLifterAutocomplete('a&b', 25);
-        await apiClient.getMeetAutocomplete('meet');
+        await expect(
+            apiClient.getLifterAutocomplete('a&b', 25),
+        ).resolves.toEqual(['A. Smith']);
+        await expect(apiClient.getMeetAutocomplete('meet')).resolves.toEqual(
+            [],
+        );
         await checkApiHealth();
         expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
             'http://powercord-api:3001/api/lifters?name=A.+Smith+%231',
@@ -87,6 +98,27 @@ describe('HTTP data client', () => {
             'Select a meet from autocomplete',
         );
     });
+    it('rejects malformed lifter suggestions', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn().mockResolvedValue(Response.json(['Taylor', null])),
+        );
+        await expect(apiClient.getLifterAutocomplete('Ta')).rejects.toSatisfy(
+            (error: unknown) =>
+                errorLogSummary(error).errorType ===
+                'InvalidAutocompleteResponseError',
+        );
+    });
+    it('rejects malformed meet choices without using the legacy endpoint', async () => {
+        const fetchMock = vi
+            .fn()
+            .mockResolvedValueOnce(Response.json([{ name: 'Meet', value: 1 }]));
+        vi.stubGlobal('fetch', fetchMock);
+        await expect(apiClient.getMeetAutocomplete('Me')).rejects.toThrow(
+            'Invalid meet choices',
+        );
+        expect(fetchMock).toHaveBeenCalledOnce();
+    });
     it('falls back to legacy choices only when the new endpoint is absent', async () => {
         const fetchMock = vi
             .fn()
@@ -105,10 +137,28 @@ describe('HTTP data client', () => {
         );
         expect(fetchMock).toHaveBeenCalledTimes(3);
     });
+    it('rejects malformed legacy meet suggestions', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi
+                .fn()
+                .mockResolvedValueOnce(new Response('{}', { status: 404 }))
+                .mockResolvedValueOnce(Response.json({ names: ['Meet'] })),
+        );
+        await expect(apiClient.getMeetAutocomplete('Me')).rejects.toThrow(
+            'Invalid autocomplete names',
+        );
+    });
     it('uses a shorter timeout for autocomplete', async () => {
         const timeout = vi.spyOn(AbortSignal, 'timeout');
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json([])));
-        await apiClient.getMeetAutocomplete('meet');
+        const choices = [{ name: 'Meet', value: 'ipf/2025-meet' }];
+        vi.stubGlobal(
+            'fetch',
+            vi.fn().mockResolvedValue(Response.json(choices)),
+        );
+        await expect(apiClient.getMeetAutocomplete('meet')).resolves.toEqual(
+            choices,
+        );
         expect(timeout).toHaveBeenLastCalledWith(2000);
         timeout.mockRestore();
     });
