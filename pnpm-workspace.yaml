@@ -4,7 +4,6 @@ packages:
 
 overrides:
     '@astrojs/language-server@2.17.3>@astrojs/astro2tsx': '0.1.4'
-    'astro@7.4.10>http-cache-semantics': '-'
     'concurrently@10.0.5>shell-quote': '1.11.0'
     'nodemon@3.1.14>chokidar': '4.0.3'
     'brace-expansion@>=4.0.0 <5.0.9': '5.0.12'
@@ -30,6 +29,3 @@ allowBuilds:
     esbuild: true
     sharp: true
     unrs-resolver: true
-
-patchedDependencies:
-    astro@7.4.10: patches/astro@7.4.10.patch
