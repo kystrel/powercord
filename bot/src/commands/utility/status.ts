@@ -24,7 +24,7 @@ function formatDataStatus(
     );
 }
 
-module.exports = {
+export default {
     data: statusCommandDefinition,
     async execute(interaction: ChatInputCommandInteraction) {
         const startedAt = Date.now();

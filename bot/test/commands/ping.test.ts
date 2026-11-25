@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import * as pingCommand from '../../src/commands/utility/ping';
+import pingCommand from '../../src/commands/utility/ping';
 import logger from '../../src/logging/logger';
 import { createChatInputInteraction } from '../helpers/interactions';
 

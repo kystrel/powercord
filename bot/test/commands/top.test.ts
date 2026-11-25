@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import * as topCommand from '../../src/commands/opl/top';
+import topCommand from '../../src/commands/opl/top';
 import logger from '../../src/logging/logger';
 import {
     createChatInputInteraction,

@@ -1,7 +1,7 @@
-import fs from 'node:fs';
 import { Events } from 'discord.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createBot } from '../src/bot';
+import { commandDefinitions } from '../src/command-definitions';
 import interactionCreate from '../src/events/interactionCreate';
 import logger from '../src/logging/logger';
 import { isBotReady } from '../src/utils/botState';
@@ -44,7 +44,6 @@ const startHealthServer = health.startHealthServer;
 
 beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(fs, 'readdirSync').mockReturnValue([]);
     vi.spyOn(health, 'startHealthServer').mockImplementation(async () => {
         const server = await startHealthServer(0);
         const address = server.address();
@@ -65,6 +64,15 @@ afterEach(async () => {
 });
 
 describe('bot lifecycle', () => {
+    it('registers the same command names as deployment', async () => {
+        await bot.start();
+
+        const deployedNames = commandDefinitions
+            .map((command) => command.toJSON().name)
+            .sort();
+        expect([...client.commands.keys()].sort()).toEqual(deployedNames);
+    });
+
     it('clears readiness and closes Discord and HTTP on stop', async () => {
         await bot.start();
         expect(isBotReady()).toBe(true);

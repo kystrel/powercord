@@ -81,7 +81,7 @@ function compareDots(a: Meet['entries'][0], b: Meet['entries'][0]): number {
     return b.dots - a.dots;
 }
 
-module.exports = {
+export default {
     data: meetCommandDefinition,
     async execute(interaction: ChatInputCommandInteraction) {
         const startedAt = Date.now();

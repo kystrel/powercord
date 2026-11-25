@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import * as meetCommand from '../../src/commands/opl/meet';
+import meetCommand from '../../src/commands/opl/meet';
 import { AmbiguousMeetError } from '../../src/data/apiClient';
 import logger from '../../src/logging/logger';
 import {

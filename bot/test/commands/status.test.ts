@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import * as statusCommand from '../../src/commands/utility/status';
+import statusCommand from '../../src/commands/utility/status';
 import { getDataStatus } from '../../src/data/api';
 import logger from '../../src/logging/logger';
 

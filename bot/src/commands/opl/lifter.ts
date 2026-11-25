@@ -41,7 +41,7 @@ function formatPlacement(place: number): string {
     return `${place}${suffix}`;
 }
 
-module.exports = {
+export default {
     data: lifterCommandDefinition,
     async execute(interaction: ChatInputCommandInteraction) {
         const startedAt = Date.now();
