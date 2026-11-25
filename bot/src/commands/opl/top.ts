@@ -22,7 +22,7 @@ import {
     truncateDiscordText,
 } from '../../utils/discord';
 
-module.exports = {
+export default {
     data: topCommandDefinition,
     async execute(interaction: ChatInputCommandInteraction) {
         const startedAt = Date.now();

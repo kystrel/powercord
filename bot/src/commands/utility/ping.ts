@@ -7,7 +7,7 @@ import {
 } from '../../logging/fields';
 import logger from '../../logging/logger';
 
-module.exports = {
+export default {
     data: pingCommandDefinition,
     async execute(interaction: ChatInputCommandInteraction) {
         const startedAt = Date.now();

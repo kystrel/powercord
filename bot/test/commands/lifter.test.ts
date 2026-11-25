@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import * as lifterCommand from '../../src/commands/opl/lifter';
+import lifterCommand from '../../src/commands/opl/lifter';
 import logger from '../../src/logging/logger';
 import {
     createAutocompleteInteraction,

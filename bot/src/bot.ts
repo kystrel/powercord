@@ -1,19 +1,24 @@
-import fs from 'node:fs';
 import type { Server } from 'node:http';
-import path from 'node:path';
 import { Client, Collection, Events } from 'discord.js';
+import lifter from './commands/opl/lifter';
+import meet from './commands/opl/meet';
+import top from './commands/opl/top';
+import ping from './commands/utility/ping';
+import status from './commands/utility/status';
 import { discordClientOptions } from './constants/client';
 import { initializeApiData } from './data/api';
 import interactionCreate from './events/interactionCreate';
 import ready from './events/ready';
 import { errorLogFields } from './logging/fields';
 import logger from './logging/logger';
-import { Command } from './types/command';
+import type { Command } from './types/command';
 import { isMockApiEnabled, validateApiConfiguration } from './utils/apiConfig';
 import { setDiscordClient } from './utils/botState';
 import { config } from './utils/config';
 import { startHealthServer } from './utils/health';
 import { startHeartbeat } from './utils/heartbeat';
+
+const commands: readonly Command[] = [lifter, meet, top, ping, status];
 
 export function createBot() {
     let client: Client | undefined;
@@ -63,32 +68,9 @@ export function createBot() {
             );
         });
 
-        client.commands = new Collection<string, Command>();
-
-        const foldersPath = path.join(__dirname, 'commands');
-        const commandFolders = fs.readdirSync(foldersPath);
-        const runtimeExtension = path.extname(__filename);
-        for (const folder of commandFolders) {
-            const commandsPath = path.join(foldersPath, folder);
-            const commandFiles = fs
-                .readdirSync(commandsPath)
-                .filter((file: string) => file.endsWith(runtimeExtension));
-            for (const file of commandFiles) {
-                const filePath = path.join(commandsPath, file);
-                const command = require(filePath);
-                if ('data' in command && 'execute' in command) {
-                    client.commands.set(command.data.name, command);
-                } else {
-                    logger.warn(
-                        {
-                            event: 'bot.invalid_command_file',
-                            filePath,
-                        },
-                        'command file missing required exports',
-                    );
-                }
-            }
-        }
+        client.commands = new Collection(
+            commands.map((command) => [command.data.name, command]),
+        );
 
         client.once(Events.ClientReady, ready.execute);
         client.on(Events.InteractionCreate, (interaction) => {
