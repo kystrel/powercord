@@ -156,14 +156,7 @@ describe('built static website', () => {
         },
     );
 
-    it('serves the legacy share image, favicon and robots file at their existing URLs', async () => {
-        const response = await fetch(`${url}/ogImage.png`);
-        expect(response.status).toBe(200);
-        expect(response.headers.get('content-type')).toContain('image/png');
-        const metadata = await sharp(
-            Buffer.from(await response.arrayBuffer()),
-        ).metadata();
-        expect([metadata.width, metadata.height]).toEqual([1200, 630]);
+    it('serves the favicon and robots file', async () => {
         expect((await fetch(`${url}/favicon.ico`)).status).toBe(200);
         expect(await (await fetch(`${url}/robots.txt`)).text()).toContain(
             'User-Agent: *',
@@ -212,9 +205,12 @@ describe('built static website', () => {
         }
     });
 
-    it('returns a real 404 for unknown routes', async () => {
-        const response = await fetch(`${url}/missing-page`);
-        expect(response.status).toBe(404);
-        expect(await response.text()).toContain('Return to PowerCord');
-    });
+    it.each(['/missing-page', '/ogImage.png'])(
+        'returns a real 404 for %s',
+        async (path) => {
+            const response = await fetch(`${url}${path}`);
+            expect(response.status).toBe(404);
+            expect(await response.text()).toContain('Return to PowerCord');
+        },
+    );
 });
