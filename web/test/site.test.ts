@@ -156,21 +156,14 @@ describe('built static website', () => {
         },
     );
 
-    it('serves the share image, favicon and robots file at their existing URLs', async () => {
-        const response = await fetch(`${url}/ogImage.png`);
-        expect(response.status).toBe(200);
-        expect(response.headers.get('content-type')).toContain('image/png');
-        const metadata = await sharp(
-            Buffer.from(await response.arrayBuffer()),
-        ).metadata();
-        expect([metadata.width, metadata.height]).toEqual([1200, 630]);
+    it('serves the favicon and robots file', async () => {
         expect((await fetch(`${url}/favicon.ico`)).status).toBe(200);
         expect(await (await fetch(`${url}/robots.txt`)).text()).toContain(
             'User-Agent: *',
         );
     });
 
-    it('uses production URLs and a square logo in the compact preview', async () => {
+    it('uses production URLs and the square share card in the compact preview', async () => {
         const html = await (await fetch(url)).text();
         const { document } = new JSDOM(html).window;
         expect(
@@ -197,10 +190,12 @@ describe('built static website', () => {
         expect(response.headers.get('content-type')).toContain('image/png');
         const content = Buffer.from(await response.arrayBuffer());
         expect(content).toEqual(
-            await readFile(new URL('../src/assets/logo.png', import.meta.url)),
+            await readFile(
+                new URL('../src/assets/share-card.png', import.meta.url),
+            ),
         );
         const metadata = await sharp(content).metadata();
-        expect(metadata.width).toBe(metadata.height);
+        expect([metadata.width, metadata.height]).toEqual([512, 512]);
         for (const dimension of ['width', 'height'] as const) {
             expect(
                 document
@@ -210,9 +205,12 @@ describe('built static website', () => {
         }
     });
 
-    it('returns a real 404 for unknown routes', async () => {
-        const response = await fetch(`${url}/missing-page`);
-        expect(response.status).toBe(404);
-        expect(await response.text()).toContain('Return to PowerCord');
-    });
+    it.each(['/missing-page', '/ogImage.png'])(
+        'returns a real 404 for %s',
+        async (path) => {
+            const response = await fetch(`${url}${path}`);
+            expect(response.status).toBe(404);
+            expect(await response.text()).toContain('Return to PowerCord');
+        },
+    );
 });
