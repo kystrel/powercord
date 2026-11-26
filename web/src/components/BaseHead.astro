@@ -1,5 +1,5 @@
 ---
-import logo from '../assets/logo.png';
+import shareCard from '../assets/share-card.png';
 import { site } from '../config/site';
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
 const { title = site.title, noindex = false } = Astro.props;
 const socialTitle = Astro.props.title ?? site.socialTitle;
 const canonical = new URL(Astro.url.pathname, site.url);
-const image = new URL(logo.src, site.url);
+const image = new URL(shareCard.src, site.url);
 ---
 
 <meta charset="utf-8" />
@@ -27,8 +27,8 @@ const image = new URL(logo.src, site.url);
 <meta property="og:description" content={site.description} />
 <meta property="og:url" content={canonical} />
 <meta property="og:image" content={image} />
-<meta property="og:image:width" content={String(logo.width)} />
-<meta property="og:image:height" content={String(logo.height)} />
+<meta property="og:image:width" content={String(shareCard.width)} />
+<meta property="og:image:height" content={String(shareCard.height)} />
 <meta property="og:image:alt" content="PowerCord logo" />
 <meta name="twitter:card" content="summary" />
 <meta name="twitter:title" content={socialTitle} />
