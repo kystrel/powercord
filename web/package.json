@@ -15,7 +15,7 @@
   "dependencies": {
     "@lucide/astro": "1.49.0",
     "@tailwindcss/vite": "4.3.5",
-    "astro": "7.4.11",
+    "astro": "7.4.12",
     "daisyui": "5.7.50",
     "sharp": "0.35.5",
     "simple-icons": "16.33.0",
